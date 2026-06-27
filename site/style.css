@@ -1,0 +1,36 @@
+:root {
+  --bg: #0f1419; --panel: #1a212b; --fg: #e6e9ef; --muted: #9aa6b2; --line: #2a3340;
+  --green: #2ea043; --amber: #d29922; --red: #da3633; --blue: #2f81f7;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 14px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+header, .controls, main, footer { max-width: 1000px; margin: 0 auto; padding: 0 16px; }
+header { padding-top: 24px; }
+h1 { margin: 0 0 4px; font-size: 22px; }
+.sub, footer { color: var(--muted); font-size: 13px; }
+code { background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+.controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin: 18px auto; }
+.field { display: flex; gap: 6px; align-items: center; }
+select, #search { background: var(--panel); color: var(--fg); border: 1px solid var(--line);
+  border-radius: 6px; padding: 6px 8px; font: inherit; }
+#search { flex: 1; min-width: 180px; }
+.chk { color: var(--muted); display: flex; gap: 4px; align-items: center; }
+.count { color: var(--muted); margin-left: auto; }
+.service { border: 1px solid var(--line); border-radius: 8px; margin: 12px 0; overflow: hidden; }
+.service h2 { margin: 0; padding: 8px 12px; font-size: 14px; background: var(--panel); }
+.method { padding: 7px 12px; border-top: 1px solid var(--line); cursor: pointer; }
+.mhead { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.badge { font-size: 11px; padding: 1px 7px; border-radius: 10px; border: 1px solid transparent; }
+.rk-read { background: rgba(46,160,67,.15); color: var(--green); }
+.rk-write, .rk-active { background: rgba(210,153,34,.15); color: var(--amber); }
+.rk-dangerous { background: rgba(218,54,51,.15); color: var(--red); }
+.st-available { background: rgba(46,160,67,.15); color: var(--green); }
+.st-needs_params { background: rgba(210,153,34,.15); color: var(--amber); }
+.st-absent, .st-unreachable, .st-other, .st-auth_error, .st-token_error {
+  background: var(--panel); color: var(--muted); }
+.cov-yes { background: rgba(47,129,247,.15); color: var(--blue); }
+.cov-no { background: rgba(210,153,34,.12); color: var(--amber); }
+.detail { display: none; margin: 8px 0 2px; background: #0b0f14; border: 1px solid var(--line);
+  border-radius: 6px; padding: 8px; font-size: 12px; overflow-x: auto; white-space: pre; }
+.method.open .detail { display: block; }
+.empty { color: var(--muted); padding: 24px 0; }

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GL.iNet API registry</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>GL.iNet API registry</h1>
+    <p class="sub">Discovered RPC surface per device — collected with <code>glinet-profiler</code>.</p>
+  </header>
+  <div class="controls">
+    <label class="field">Model
+      <select id="device"></select>
+    </label>
+    <input id="search" type="search" placeholder="filter service / method…">
+    <label class="chk"><input type="checkbox" id="available-only"> available only</label>
+    <label class="chk"><input type="checkbox" id="not-wrapped"> not yet wrapped</label>
+    <span id="count" class="count"></span>
+  </div>
+  <main id="results"></main>
+  <footer>
+    <p>Sanitized profiles — no device identifiers or response values are published.</p>
+  </footer>
+  <script src="app.js"></script>
+</body>
+</html>

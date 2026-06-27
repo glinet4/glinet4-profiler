@@ -12,3 +12,6 @@ build/
 reports/
 captures/
 docs/devices/
+
+# Pages staging area — assembled at deploy time, never committed.
+_site/
