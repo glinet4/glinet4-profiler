@@ -57,7 +57,25 @@ def test_capture_mode_offline_submit_link(monkeypatch, tmp_path, capsys):
 def test_no_ip_starts_web_server(monkeypatch):
     called = {}
     monkeypatch.setattr(cli_mod, "serve", lambda **kwargs: called.update(kwargs))
-    rc = cli_mod.main(["--port", "9999", "--no-browser"])
+    rc = cli_mod.main(["--port", "9999", "--no-browser", "--registry-url", "http://x/i.json"])
     assert rc == 0
     assert called["port"] == 9999
     assert called["open_browser"] is False
+    assert called["registry_url"] == "http://x/i.json"
+
+
+def test_capture_mode_known_device(monkeypatch, tmp_path, capsys):
+    """A device already in the manifest → display 'already in the registry' message."""
+
+    async def fake_capture(ip, username, password, *, ssh=True, on_progress=None):  # noqa: ARG001
+        return {**PROFILE, "model": "mt6000", "firmware_version": "4.9.0", "id": "mt6000_4.9.0"}
+
+    async def fake_fetch(url, *, timeout=5.0):  # noqa: ARG001
+        return MAN  # contains mt6000_4.9.0
+
+    monkeypatch.setattr(cli_mod, "capture", fake_capture)
+    monkeypatch.setattr(cli_mod, "fetch_manifest", fake_fetch)
+    monkeypatch.chdir(tmp_path)
+    rc = cli_mod.main(["192.168.8.1", "--password", "x", "--no-ssh"])
+    assert rc == 0
+    assert "already in the registry" in capsys.readouterr().out

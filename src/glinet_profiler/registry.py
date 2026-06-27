@@ -17,8 +17,8 @@ async def fetch_manifest(
             async with session.get(url) as resp:
                 if resp.status != 200:
                     return None
-                data: dict[str, Any] = await resp.json(content_type=None)
-                return data
+                payload = await resp.json(content_type=None)
+                return payload if isinstance(payload, dict) else None
     except (aiohttp.ClientError, TimeoutError, json.JSONDecodeError):
         return None
 
