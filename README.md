@@ -36,11 +36,12 @@ password, and click **Capture**. You'll get a sanitized profile, a
 ## What's in the profile (and what isn't)
 
 The published profile keeps only the device **model + firmware** and the
-**per-method API shape** (status, risk, gli4py coverage, params, schema).
-It **drops** device identifiers (`mac`, `sn`, `sn_bak`) and **all response
-values** — the raw report never leaves the local `capture()` step.
+**per-method API shape** (status, risk, whether the [gli4py](https://github.com/shauneccles/gli4py)
+client wraps it, params, schema). It **drops** device identifiers (`mac`, `sn`,
+`sn_bak`) and **all response values** — the raw report never leaves the local
+`capture()` step.
 
-Enumeration is strictly **read-only** (gli4py's catalog tier, plus an optional
+Enumeration is strictly **read-only** (a built-in catalog tier, plus an optional
 SSH read tier if you tick the box and have SSH access).
 
 ## Security
@@ -50,13 +51,21 @@ SSH read tier if you tick the box and have SSH access).
 - The password is used only to log into your router from the local process and
   is never persisted, logged, or sent anywhere remote.
 
-## Relationship to gli4py
+## How it fits with gli4py and the registry
 
-This project is the **product** (launcher + registry + browsing site); it
-depends on [gli4py](https://github.com/shauneccles/gli4py) for the enumeration
-**engine**. The dependency is currently pinned to the gli4py branch that ships
-the enumerator (see `pyproject.toml`); it will move to a released PyPI version
-once gli4py publishes it.
+This package is the **capture launcher** only. The enumeration **engine** lives
+inside it (`glinet_profiler/enumerator/`, originally developed in the gli4py
+project) — there is **no runtime dependency on gli4py** (deps are just
+`aiohttp`, `paramiko`, `libpass`).
+
+- **[gli4py](https://github.com/shauneccles/gli4py)** — the typed GL.iNet Python
+  **client library**. Each captured profile records, per method, whether the
+  gli4py client already wraps it ("coverage") — a lens for Python developers.
+- **[glinet-registry](https://github.com/shauneccles/glinet-registry)** — the
+  public, community registry of device profiles (browse site + submission bot).
+  The launcher fetches its manifest to tell you whether a device is already
+  known, and **Submit** opens its issue form. It releases independently of this
+  package.
 
 ## Development
 
@@ -66,11 +75,13 @@ uv run pytest -q
 uv run ruff check . && uv run mypy src && uv run pylint $(git ls-files '*.py')
 ```
 
-## Roadmap
+## The three repos
 
-- **Phase 1 (this repo):** the local capture launcher — done.
-- **Phase 2:** the public registry **browsing site** (model browser + filters),
-  re-homed from the gli4py api-browser, plus automated PR submission.
+- **glinet-profiler** (this repo) — the capture launcher + enumeration engine.
+- **[glinet-registry](https://github.com/shauneccles/glinet-registry)** — the
+  device-profile data, browse site, and submission bot.
+- **[gli4py](https://github.com/shauneccles/gli4py)** — the GL.iNet Python client
+  library (the "coverage" lens shown in each profile).
 
 ## License
 

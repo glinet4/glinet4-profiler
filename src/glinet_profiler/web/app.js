@@ -17,7 +17,7 @@ function renderProfile(p) {
       const rec = methods[m];
       let cov = "";
       if (rec.covered_by) cov = badge(`gli4py: ${rec.covered_by}`, "cov-yes");
-      else if (PRESENT.has(rec.status)) cov = badge("not yet wrapped", "cov-no");
+      else if (PRESENT.has(rec.status)) cov = badge("not yet in gli4py", "cov-no");
       rows.push(`<div class="method"><code>${escapeHtml(m)}</code>${badge(rec.status, "st-" + rec.status)}${badge(rec.risk, "rk-" + rec.risk)}${cov}</div>`);
     }
     parts.push(`<section class="service"><h3>${escapeHtml(service)}</h3>${rows.join("")}</section>`);
