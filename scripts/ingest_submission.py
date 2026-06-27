@@ -17,7 +17,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         print(ingest(Path(args.submission), _DATA))
-    except (ValueError, json.JSONDecodeError, KeyError) as exc:
+    except (ValueError, json.JSONDecodeError, KeyError, TypeError, AttributeError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
     return 0

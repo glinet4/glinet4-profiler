@@ -34,7 +34,8 @@ jobs:
             echo "id=$ID" >> "$GITHUB_OUTPUT"
             echo "ok=true" >> "$GITHUB_OUTPUT"
           else
-            { echo "error<<ERR_EOF"; cat err.txt; echo "ERR_EOF"; } >> "$GITHUB_OUTPUT"
+            DELIM="ERR_$(openssl rand -hex 8)"
+            { echo "error<<$DELIM"; cat err.txt; echo "$DELIM"; } >> "$GITHUB_OUTPUT"
             echo "ok=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Open pull request

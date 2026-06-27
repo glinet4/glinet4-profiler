@@ -22,6 +22,9 @@ def validate_profile(data: Any) -> str | None:  # pylint: disable=too-many-retur
     for key in _REQUIRED:
         if key not in data:
             return f"missing required key: {key}"
+    for key in ("model", "firmware_version"):
+        if not isinstance(data[key], str) or not data[key].strip():
+            return f"'{key}' must be a non-empty string"
     if not isinstance(data["services"], dict):
         return "'services' must be an object"
     for ident in _IDENTIFIERS:

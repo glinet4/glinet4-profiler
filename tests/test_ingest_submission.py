@@ -51,6 +51,10 @@ def test_ingest_writes_and_normalizes_id(tmp_path):
     assert manifest["devices"][0]["id"] == "mt6000_4.9.0"
 
 
+def test_validate_rejects_nonstring_model():
+    assert "non-empty string" in validate_profile({**CLEAN, "model": 123})
+
+
 def test_ingest_raises_on_invalid(tmp_path):
     sub = tmp_path / "submission.json"
     sub.write_text(json.dumps({**CLEAN, "sn": "SECRET"}), encoding="utf-8")
