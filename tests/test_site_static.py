@@ -13,8 +13,13 @@ DATA = ROOT / "src" / "glinet_profiler" / "data"
 def test_index_has_controls():
     html = (SITE / "index.html").read_text(encoding="utf-8")
     for needle in (
-        'id="device"', 'id="search"', 'id="available-only"',
-        'id="not-wrapped"', 'id="results"', "app.js", "style.css",
+        'id="device"',
+        'id="search"',
+        'id="available-only"',
+        'id="not-wrapped"',
+        'id="results"',
+        "app.js",
+        "style.css",
     ):
         assert needle in html, needle
 
