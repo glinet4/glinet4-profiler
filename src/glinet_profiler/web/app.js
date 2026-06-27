@@ -66,6 +66,12 @@ async function onCapture(e) {
         else if (ev.event === "error") errorMsg = ev.message;
       }
     }
+    const tail = (buf + decoder.decode()).trim();  // flush a final line lacking a trailing newline
+    if (tail) {
+      const ev = JSON.parse(tail);
+      if (ev.event === "result") result = ev;
+      else if (ev.event === "error") errorMsg = ev.message;
+    }
     showProgress(false);
     if (errorMsg) { $("result").innerHTML = `<p class="error">${escapeHtml(errorMsg)}</p>`; return; }
     if (!result) { $("result").innerHTML = "<p class='error'>No result received.</p>"; return; }

@@ -22,6 +22,7 @@ def test_index_has_form_controls():
         'id="submit"',
         'id="progress"',
         'id="progress-msg"',
+        'id="progress-count"',
         "app.js",
         "style.css",
     ):
