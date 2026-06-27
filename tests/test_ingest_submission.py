@@ -8,7 +8,9 @@ import pytest
 from glinet_profiler.ingest import ingest, validate_profile
 
 CLEAN = {
-    "id": "ignored", "model": "mt6000", "firmware_version": "4.9.0",
+    "id": "ignored",
+    "model": "mt6000",
+    "firmware_version": "4.9.0",
     "services": {"system": {"get_info": {"status": "available", "covered_by": "router_info"}}},
 }
 
@@ -31,7 +33,10 @@ def test_validate_rejects_method_value():
 
 
 def test_validate_rejects_mac_hex():
-    bad = {**CLEAN, "services": {"s": {"m": {"status": "available", "schema": {"a": "94:83:C4:AA:BB:CC"}}}}}
+    bad = {
+        **CLEAN,
+        "services": {"s": {"m": {"status": "available", "schema": {"a": "94:83:C4:AA:BB:CC"}}}},
+    }
     assert "MAC" in validate_profile(bad)
 
 
