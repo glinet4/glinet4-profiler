@@ -26,8 +26,10 @@ jobs:
       - name: Download + ingest
         id: ingest
         if: steps.url.outputs.url != ''
+        env:
+          ATT_URL: ${{ steps.url.outputs.url }}
         run: |
-          curl -sL -A glinet-profiler-bot "${{ steps.url.outputs.url }}" -o submission.json
+          curl -sL -A glinet-profiler-bot "$ATT_URL" -o submission.json
           if ID=$(uv run python scripts/ingest_submission.py submission.json 2>err.txt); then
             echo "id=$ID" >> "$GITHUB_OUTPUT"
             echo "ok=true" >> "$GITHUB_OUTPUT"
