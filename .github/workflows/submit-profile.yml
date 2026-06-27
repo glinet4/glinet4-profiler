@@ -11,8 +11,10 @@ jobs:
     if: contains(github.event.issue.labels.*.name, 'profile-submission')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v7
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
         with:
           python-version: "3.11"
       - run: uv sync --all-extras --dev
@@ -51,7 +53,7 @@ jobs:
             Automated profile submission from #${{ github.event.issue.number }}.
       - name: Comment result on the issue
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         env:
           FOUND_URL: ${{ steps.url.outputs.url }}
           OK: ${{ steps.ingest.outputs.ok }}
