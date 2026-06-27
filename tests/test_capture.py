@@ -1,0 +1,56 @@
+"""capture() tests against a mocked enumeration (no router)."""
+# pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument
+
+import json
+
+import glinet_profiler.capture as capture_mod
+from glinet_profiler.capture import capture
+
+RAW = {
+    "device": {
+        "model": "mt6000",
+        "firmware_version": "4.9.0",
+        "mac": "94:83:C4:AA:BB:CC",
+        "sn": "SECRET123",
+    },
+    "services": {
+        "system": {
+            "get_info": {
+                "status": "available",
+                "error_code": None,
+                "risk": "read",
+                "discovered_by": "catalog",
+                "covered_by": "router_info",
+                "params": None,
+                "schema": {"model": "str"},
+                "value": {"mac": "94:83:C4:AA:BB:CC"},
+            }
+        }
+    },
+}
+
+
+async def test_capture_returns_sanitized_profile(monkeypatch):
+    async def fake_enumerate(host, username, password, *, ssh):  # noqa: ARG001
+        return RAW
+
+    monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
+    profile = await capture("http://192.168.8.1", "root", "pw")
+    assert profile["id"] == "mt6000_4.9.0"
+    assert profile["model"] == "mt6000"
+    assert "mac" not in profile and "sn" not in profile
+    assert "value" not in profile["services"]["system"]["get_info"]
+    blob = json.dumps(profile)
+    assert "SECRET123" not in blob and "94:83:C4" not in blob
+
+
+async def test_capture_passes_ssh_flag(monkeypatch):
+    seen = {}
+
+    async def fake_enumerate(host, username, password, *, ssh):  # noqa: ARG001
+        seen["ssh"] = ssh
+        return RAW
+
+    monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
+    await capture("http://x", "root", "pw", ssh=True)
+    assert seen["ssh"] is True

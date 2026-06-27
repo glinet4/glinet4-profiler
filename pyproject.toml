@@ -1,0 +1,72 @@
+[project]
+name = "glinet-profiler"
+version = "0.1.0"
+description = "Local capture launcher + registry for GL.iNet device API profiles (uses gli4py)."
+readme = "README.md"
+license = "GPL-3.0-or-later"
+requires-python = ">=3.11"
+dependencies = ["gli4py", "aiohttp>=3.8.4"]
+
+[project.optional-dependencies]
+ssh = ["paramiko>=3"]
+
+[project.scripts]
+gli4py-web = "glinet_profiler.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/glinet_profiler"]
+
+[tool.uv.sources]
+# gli4py's enumerator engine is not yet on PyPI; pin to the branch that ships it.
+# Switch to a released PyPI version once gli4py publishes the enumerator.
+gli4py = { git = "https://github.com/shauneccles/gli4py.git", branch = "feat/api-enumerator" }
+
+[dependency-groups]
+dev = [
+    "pytest>=7.2",
+    "pytest-asyncio>=0.21",
+    "pytest-aiohttp>=1.0",
+    "ruff>=0.6",
+    "mypy>=1.8",
+    "pylint>=3",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src"]
+
+[[tool.mypy.overrides]]
+module = ["uplink", "uplink.*", "paramiko", "gli4py", "gli4py.*"]
+ignore_missing_imports = true
+
+[tool.pylint."messages control"]
+disable = [
+    "import-error",
+    "fixme",
+    "line-too-long",
+    "invalid-name",
+    "too-many-public-methods",
+    "abstract-method",
+    "too-many-instance-attributes",
+    "too-few-public-methods",
+    "too-many-branches",
+    "too-many-locals",
+    "import-outside-toplevel",
+    "duplicate-code",
+]

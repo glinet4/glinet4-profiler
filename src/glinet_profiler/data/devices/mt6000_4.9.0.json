@@ -1,0 +1,3922 @@
+{
+  "device_type": 2,
+  "firmware_version": "4.9.0",
+  "hardware_version": "",
+  "id": "mt6000_4.9.0",
+  "model": "mt6000",
+  "services": {
+    "acl": {
+      "get_acl_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_group_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "groups": "list"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "adguardhome": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "dns_enabled": "bool",
+          "enabled": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "bark": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "ipv6_enable": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "pairing_code": "str",
+          "status": "int"
+        },
+        "status": "available"
+      }
+    },
+    "black_white_list": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "mode": "str"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "cable": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "ipv4": {
+            "dns": [
+              "str"
+            ],
+            "gateway": "str",
+            "ip": "str"
+          },
+          "mode": "int",
+          "protocol": "str",
+          "secondwan": {
+            "mode": "int",
+            "status": "int"
+          },
+          "status": "int",
+          "usbwan": {
+            "err_code": "int",
+            "err_msg": "str"
+          }
+        },
+        "status": "available"
+      }
+    },
+    "clients": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": "list_all_clients",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "clients": [
+            {
+              "blocked": "bool",
+              "iface": "str",
+              "ip": "str",
+              "ipv6": "list",
+              "last_update_rate": "int",
+              "limit_rx": "int",
+              "limit_tx": "int",
+              "mac": "str",
+              "name": "str",
+              "online": "bool",
+              "online_time": "int",
+              "remote": "bool",
+              "rx": "int",
+              "total_rx": "str",
+              "total_rx_init": "str",
+              "total_tx": "str",
+              "total_tx_init": "str",
+              "tx": "int",
+              "type": "int"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "auto_remove_offline": "bool",
+          "cable_total": "int",
+          "wireless_total": "int"
+        },
+        "status": "available"
+      }
+    },
+    "cloud": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "aw_api_url": "str",
+          "aw_url": "str",
+          "bindtype": "str",
+          "cloud_enable": "bool",
+          "rtty_ssh": "bool",
+          "rtty_web": "bool",
+          "serverzones": [
+            "str"
+          ],
+          "token_invalid": "bool",
+          "token_status": "int"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "custom_dns": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "ddns": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "device_id": "str",
+          "enable_ddns": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "ddns": "str",
+          "ips": [
+            {
+              "interface": "str",
+              "ip": [
+                "str"
+              ]
+            }
+          ],
+          "status": "int"
+        },
+        "status": "available"
+      }
+    },
+    "diag": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "dlna": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "dns": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "controld_id": "str",
+          "controld_type": "int",
+          "force_dns": "bool",
+          "manual_list": "list",
+          "mode": "str",
+          "nextdns_id": "str",
+          "override_vpn": "bool",
+          "proto": "str",
+          "proto_manual": "str",
+          "provider": "str",
+          "proxy_list": "list",
+          "rebind_protection": "bool",
+          "secure_manual_list": "list",
+          "server_auto": [
+            "str"
+          ],
+          "servers_list": "list"
+        },
+        "status": "available"
+      },
+      "get_host": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "content": "str"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": [
+          {
+            "provider": "str",
+            "server_list": [
+              {
+                "address": "list",
+                "address6": "list",
+                "description": "str",
+                "name": "str",
+                "url_doh": "str",
+                "url_doq": "str",
+                "url_dot": "str"
+              }
+            ],
+            "sup_proto": [
+              "str"
+            ]
+          }
+        ],
+        "status": "available"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "dpi": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "edgerouter": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "ignore": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": "connected_to_internet",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "detected": "int"
+        },
+        "status": "available"
+      },
+      "status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "fan": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "firewall": {
+      "get_acl_rule_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": "list",
+        "status": "available"
+      },
+      "get_acl_zone_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "externals": [
+            "str"
+          ],
+          "internals": [
+            "str"
+          ]
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_dmz": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enabled": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_port_forward_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "res": [
+            {
+              "dest": "str",
+              "dest_ip": "str",
+              "dest_port": "str",
+              "enabled": "bool",
+              "id": "str",
+              "name": "str",
+              "proto": "str",
+              "src": "str",
+              "src_dport": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_rule_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "res": "list"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_wan_access": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable_https": "bool",
+          "enable_ping": "bool",
+          "enable_ssh": "bool",
+          "enable_whitelist": "bool",
+          "whitelist": "list"
+        },
+        "status": "available"
+      },
+      "get_zone_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "externals": [
+            "str"
+          ],
+          "internals": [
+            "str"
+          ]
+        },
+        "status": "available"
+      }
+    },
+    "flow_statistics": {
+      "get_app_flow_statistics": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_flow_statistics": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_statistics_rule": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "time": "str",
+          "type": "str"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_top_app_flow_statistics": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      }
+    },
+    "igmp": {
+      "get": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "version": "int"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "ipv6": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_ipv6": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "lan_dns_mode": "bool",
+          "lan_mode": "str"
+        },
+        "status": "available"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "kmwan": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "interfaces": [
+            {
+              "enable_check": "bool",
+              "enable_ssl": "bool",
+              "interface": "str",
+              "metric": "int",
+              "track_ipv4": [
+                "str"
+              ],
+              "track_ipv6": [
+                "str"
+              ],
+              "track_method": "int",
+              "track_mode": "int",
+              "track_proto": "int",
+              "weight": "int"
+            }
+          ],
+          "mode": "int"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "interfaces": [
+            {
+              "interface": "str",
+              "status_v4": "int",
+              "status_v6": "int"
+            }
+          ]
+        },
+        "status": "available"
+      }
+    },
+    "lan": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "interfaces": [
+            {
+              "ap_isolate": "int",
+              "dns": "list",
+              "enable": "int",
+              "end": "str",
+              "gateway": "str",
+              "interface": "str",
+              "ip": "str",
+              "leasetime": "str",
+              "lpr": "list",
+              "netmask": "str",
+              "start": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_static_bind_list": {
+        "covered_by": "list_static_clients",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "static_bind_list": [
+            {
+              "ip": "str",
+              "mac": "str",
+              "name": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "led": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "led_enable": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "logread": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_crash_log": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_kernel_log": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "log": "str"
+        },
+        "status": "available"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_system_log": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_uboot_log": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "macclone": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_mac": {
+        "covered_by": "router_mac",
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "mcu": {
+      "get_battery_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "modem": {
+      "get_cells_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_debug_msg": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "at_debug_msgs": {
+            "resp": "str",
+            "ret": "int"
+          },
+          "modem_config_file": {
+            "is_single_dial": "bool",
+            "slot_feature": "list",
+            "slot_multi_priority": "list"
+          },
+          "modem_info": {
+            "bus": "str",
+            "devices": "list",
+            "imei": "list",
+            "lock_carrier_support": "bool",
+            "lock_tower_support": "bool",
+            "mtu_need_sync": "int",
+            "name": "str",
+            "network_type_support": "bool",
+            "offline_doc": "bool",
+            "protocols": "list",
+            "signal_support": "bool",
+            "sim_slot_num": "int",
+            "sms_support": "bool",
+            "standby_type": "int",
+            "support_pin_count": "bool",
+            "supports_ip_type": [
+              {
+                "label": "str",
+                "value": "int"
+              }
+            ],
+            "supports_rrc_seg": "bool",
+            "type": "int",
+            "vendor": "str",
+            "version": "str"
+          },
+          "modem_status": {
+            "bus": "str",
+            "current_sim_slot": "str",
+            "slot_switch_count": "int",
+            "slot_switch_status": "int",
+            "status": "int"
+          },
+          "network_info": {
+            "resp": "str",
+            "ret": "int"
+          },
+          "network_status": {
+            "resp": "str",
+            "ret": "int"
+          },
+          "sim_info": {
+            "sims": "list"
+          },
+          "sim_status": {
+            "sims": "list"
+          }
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_sms_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_traffic_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      }
+    },
+    "mptun": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "interfaces": [
+            {
+              "enable": "bool",
+              "name": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "nodes": "list",
+          "status": "int",
+          "type": "int"
+        },
+        "status": "available"
+      }
+    },
+    "nas-web": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_disk_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "disk": "list",
+          "disk_number": "int"
+        },
+        "status": "available"
+      },
+      "get_file_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": 1,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "other"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_nas_ser": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "int"
+        },
+        "status": "available"
+      },
+      "get_proto_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": 1,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "other"
+      },
+      "get_share_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": 1,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "other"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "int"
+        },
+        "status": "available"
+      },
+      "get_user_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": 1,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "other"
+      }
+    },
+    "netifyd": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "netmode": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_mode": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "mode": "str"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "network": {
+      "check_wan_cable": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      },
+      "get_arp_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "entries": [
+            {
+              "device": "str",
+              "ip": "str",
+              "mac": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_dhcp_leases": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "routes": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "routes6": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "ovpn-client": {
+      "check_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_all_config_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "config_list": "list"
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_group_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "groups": [
+            {
+              "askpass": "str",
+              "askpass_exist": "bool",
+              "auth_type": "int",
+              "client_count": "int",
+              "group_id": "int",
+              "group_name": "str",
+              "group_type": "int",
+              "password": "str",
+              "procedure": "int",
+              "show": "bool",
+              "username": "str",
+              "work_mode": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_recommend_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_route_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_setting": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_third_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      }
+    },
+    "ovpn-server": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "access_scope": "int",
+          "auth": "str",
+          "cipher": "str",
+          "client_auth": "int",
+          "client_to_client": "bool",
+          "dh": "str",
+          "end": "str",
+          "hmac": "bool",
+          "initialization": "bool",
+          "local_access": "bool",
+          "lzo": "bool",
+          "mask": "str",
+          "mode": "str",
+          "port": "int",
+          "proto": "str",
+          "start": "str",
+          "subnetv4": "str",
+          "subnetv6": "str",
+          "tap_address": "str",
+          "tap_mask": "str",
+          "verb": "str"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_route_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "ipv4_route_rules": "list",
+          "ipv6_route_rules": "list"
+        },
+        "status": "available"
+      },
+      "get_setting": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "local_access": "bool",
+          "masq": "bool"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "initialization": "bool",
+          "log": "str",
+          "rx_bytes": "int",
+          "status": "int",
+          "tunnel_ip": "str",
+          "tx_bytes": "int"
+        },
+        "status": "available"
+      },
+      "get_user_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "user_list": "list"
+        },
+        "status": "available"
+      }
+    },
+    "parental-control": {
+      "get_brief": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "groups": "list",
+          "init": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_mode": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "plugins": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "source": [
+            {
+              "name": "str",
+              "system": "bool",
+              "url": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": "list",
+        "status": "available"
+      },
+      "get_package_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32603,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "other"
+      },
+      "get_repository_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "count_all": "int",
+          "count_installed": "int",
+          "count_not_installed": "int",
+          "count_reserve": "int",
+          "count_updatable": "int",
+          "status": "int",
+          "time_current": "int",
+          "time_last_update": "int"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "qos": {
+      "get_client_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "clients": "list"
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enable": "bool",
+          "mode": "str"
+        },
+        "status": "available"
+      },
+      "get_device_group": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "group": "list"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "reboot": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "repeater": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "auto": "bool",
+          "dfs_support": "bool",
+          "macaddr": "str",
+          "smart_reconnect": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_saved_ap_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "res": [
+            {
+              "auto_portal": "bool",
+              "disguise": "bool",
+              "key": "str",
+              "macaddr": {
+                "macaddr": "str",
+                "mode": "str",
+                "update": "str"
+              },
+              "manual": "bool",
+              "protocol": "str",
+              "ssid": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "portal_info": {
+            "auth_mode": "int",
+            "password": "str",
+            "username": "str",
+            "voucher": "str"
+          },
+          "state": "int",
+          "state_s": "str"
+        },
+        "status": "available"
+      }
+    },
+    "rtty": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "ssh_enabled": "bool",
+          "web_enabled": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "s2s": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "status": "str"
+        },
+        "status": "available"
+      }
+    },
+    "samba": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "sms-forward": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_rule_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "sqm": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "download": "int",
+          "enable": "bool",
+          "qdisc": "str",
+          "upload": "int"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "srv_conn_check": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "switch-button": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_funcs": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "system": {
+      "disk_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "root": {
+            "free": "int",
+            "total": "int",
+            "used": "int"
+          },
+          "tmp": {
+            "free": "int",
+            "total": "int",
+            "used": "int"
+          }
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_httpd_mem_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "memory_used": "int"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": "router_info",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "board_info": {
+            "architecture": "str",
+            "hostname": "str",
+            "kernel_version": "str",
+            "model": "str",
+            "openwrt_version": "str"
+          },
+          "country_code": "str",
+          "cpu_num": "int",
+          "ddns": "str",
+          "device_type": "int",
+          "firmware_date": "str",
+          "firmware_type": "str",
+          "firmware_version": "str",
+          "hardware_feature": {
+            "bluetooth": "bool",
+            "build_in_modem": "str",
+            "fan": "bool",
+            "gps": "bool",
+            "hwnat": "bool",
+            "lan": "str",
+            "lcd_sched": "bool",
+            "mcu": "bool",
+            "microsd": "str",
+            "modem_reset": "int",
+            "nand": "bool",
+            "noled": "bool",
+            "nowds": "bool",
+            "radio": "str",
+            "reset_button": "str",
+            "rs485": "bool",
+            "screen": "bool",
+            "silkprint": "str",
+            "simo": "bool",
+            "slot": "str",
+            "submodel": "str",
+            "switch_button": "str",
+            "usb": "str",
+            "usb3": "str",
+            "usb_power": "str",
+            "usb_reset": "str",
+            "wan": "str",
+            "wifi_type": "str"
+          },
+          "hardware_version": "str",
+          "hidden_features": "list",
+          "mac": "str",
+          "model": "str",
+          "sn": "str",
+          "sn_bak": "str",
+          "software_feature": {
+            "adguard": "bool",
+            "astrowarp_lite": "bool",
+            "bark": "bool",
+            "cellular_ref": "str",
+            "cellular_upgrade": "bool",
+            "ids_ips": "bool",
+            "ipv6": "bool",
+            "is_need_6g_bssid_sync": "bool",
+            "ksmbd": "bool",
+            "minimum_temperature": "str",
+            "mlo": "bool",
+            "nas": "bool",
+            "obfuscation": "bool",
+            "passthrough": "bool",
+            "repeater_eap": "bool",
+            "secondwan": "bool",
+            "sms_forward": "bool",
+            "tor": "bool",
+            "vlan": "bool",
+            "vpn": "bool"
+          },
+          "vendor": "str"
+        },
+        "status": "available"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_load": {
+        "covered_by": "router_get_load",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "load_average": [
+            "int"
+          ],
+          "memory_buff_cache": "int",
+          "memory_free": "int",
+          "memory_total": "int"
+        },
+        "status": "available"
+      },
+      "get_percent": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_security_policy": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "redirect_https": "int",
+          "security_rule": "int"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": "router_get_status",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "client": [
+            {
+              "auto_remove_offline": "bool",
+              "cable_total": "int",
+              "wireless_total": "int"
+            }
+          ],
+          "network": [
+            {
+              "interface": "str",
+              "online": "bool",
+              "up": "bool"
+            }
+          ],
+          "service": [
+            {
+              "name": "str",
+              "status": "int"
+            }
+          ],
+          "system": {
+            "content_protection_enabled": "bool",
+            "cpu": {
+              "temperature": "int"
+            },
+            "ddns_enabled": "bool",
+            "dpi_info": {
+              "lib_update_time": "str",
+              "lib_version": "str",
+              "status": "str"
+            },
+            "flash_app": "int",
+            "flash_free": "int",
+            "flash_total": "int",
+            "flow_statistics_enabled": "bool",
+            "guest_ip": "str",
+            "guest_netmask": "str",
+            "iot_ip": "str",
+            "iot_netmask": "str",
+            "ipv6_enabled": "bool",
+            "lan_ip": "str",
+            "lan_netmask": "str",
+            "load_average": [
+              "int"
+            ],
+            "memory_buff_cache": "int",
+            "memory_free": "int",
+            "memory_total": "int",
+            "mode": "int",
+            "netnat_enabled": "bool",
+            "prio_enabled": "bool",
+            "qos_enabled": "bool",
+            "sqm_enabled": "bool",
+            "time_sync_status": "bool",
+            "timestamp": "int",
+            "tzoffset": "str",
+            "uptime": "float"
+          },
+          "wifi": [
+            {
+              "band": "str",
+              "channel": "int",
+              "encryption": "str",
+              "guest": "bool",
+              "hidden": "bool",
+              "init": "bool",
+              "iot": "bool",
+              "mld": "bool",
+              "name": "str",
+              "passwd": "str",
+              "ssid": "str",
+              "up": "bool"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_timezone_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "autotimezone_enabled": "bool",
+          "localtime": "int",
+          "timestamp": "int",
+          "timezone": "str",
+          "tzoffset": "str",
+          "zonename": "str"
+        },
+        "status": "available"
+      },
+      "get_unixtime": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "time": "int"
+        },
+        "status": "available"
+      }
+    },
+    "tailscale": {
+      "get_config": {
+        "covered_by": "tailscale_configured",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enabled": "bool",
+          "lan_enabled": "bool",
+          "lan_ip": "str",
+          "masq": "bool",
+          "run_exit_node": "bool",
+          "wan_enabled": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": "tailscale_connection_state",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "dns": [
+            "str"
+          ]
+        },
+        "status": "available"
+      }
+    },
+    "tethering": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": "list",
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "devices": "list",
+          "status": "int"
+        },
+        "status": "available"
+      }
+    },
+    "timer": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "tor": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "countries": "list",
+          "enable": "bool",
+          "manual": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": "list",
+        "status": "available"
+      }
+    },
+    "ui": {
+      "check_initialized": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "environment_support": "bool",
+          "firmware_category": "str",
+          "firmware_version": "str",
+          "hostname": "str",
+          "inited_agent": "bool",
+          "inited_internet": "bool",
+          "initialized": "bool",
+          "mac": "str",
+          "model": "str",
+          "security_rule": "int",
+          "support_screen_init": "bool",
+          "time_info": {
+            "api_extra": "int",
+            "init": "int",
+            "reboot": "int",
+            "upgrade": "int"
+          },
+          "vpn_wizard_done": "bool"
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_lang": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "lang": "str",
+          "list": [
+            {
+              "id": "int",
+              "label": "str",
+              "value": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_menu_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "menus": [
+            {
+              "disables": [
+                "str"
+              ],
+              "hidden_mode": [
+                "str"
+              ],
+              "index": "int",
+              "level": "int",
+              "parent": "str",
+              "parent_icon": "str",
+              "parent_index": "int",
+              "title": {
+                "translate": "str"
+              },
+              "view": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "load_locales": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "unreachable"
+      }
+    },
+    "upgrade": {
+      "check_firmware_local": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "sha256": "str",
+          "status": "int"
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "prompt": "bool",
+          "upgrade_enable": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_online_upgrade_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": "list",
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "vpn-client": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": "wireguard_client_state",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "mode": "int",
+          "status_list": "list"
+        },
+        "status": "available"
+      },
+      "get_tunnel": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "default_tunnels": [
+            {
+              "enabled": "bool",
+              "from": {
+                "type": "str"
+              },
+              "id": "str",
+              "killswitch": "bool",
+              "name": "str",
+              "to": {
+                "domain_list": "str",
+                "domain_list_len": "int",
+                "manual": "bool",
+                "type": "str"
+              },
+              "tunnel_id": "int",
+              "via": {
+                "via": "str"
+              }
+            }
+          ],
+          "global_enabled": "bool",
+          "tunnels": "list"
+        },
+        "status": "available"
+      }
+    },
+    "vpn-policy": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_domain_policy": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_global_policy": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_mac_policy": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_proxy_mode": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_vlan_policy": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      }
+    },
+    "wg-client": {
+      "check_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_all_config_list": {
+        "covered_by": "wireguard_client_list",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "config_list": "list"
+        },
+        "status": "available"
+      },
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_config_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_group_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "groups": [
+            {
+              "auth_type": "int",
+              "group_id": "int",
+              "group_name": "str",
+              "group_type": "int",
+              "password": "str",
+              "peer_count": "int",
+              "procedure": "int",
+              "show": "bool",
+              "username": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_recommend_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      },
+      "get_route_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_setting": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": "wireguard_client_state",
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_third_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "err_code": "int",
+          "err_msg": "str"
+        },
+        "status": "available"
+      }
+    },
+    "wg-server": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "address_v4": "str",
+          "address_v6": "str",
+          "amnezia": "str",
+          "initialization": "bool",
+          "local_access": "bool",
+          "obfuscation": "int",
+          "port": "int",
+          "private_key": "str",
+          "public_key": "str"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_peer_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "peers": [
+            {
+              "allowed_ips": "str",
+              "client_ip": "str",
+              "deprecated": "int",
+              "dns": "str",
+              "enabled": "bool",
+              "end_point": "str",
+              "mtu": "int",
+              "name": "str",
+              "peer_id": "int",
+              "persistent_keepalive": "int",
+              "presharedkey_enable": "bool",
+              "private_key": "str",
+              "public_key": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_route_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "ipv4_route_rules": "list",
+          "ipv6_route_rules": "list"
+        },
+        "status": "available"
+      },
+      "get_setting": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "client_to_client": "bool",
+          "local_access": "bool",
+          "masq": "bool"
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "peers": [
+            {
+              "latest_handshake": "int",
+              "name": "str",
+              "private_ip": "str",
+              "public_ip": "str",
+              "rx_bytes": "int",
+              "tx_bytes": "int"
+            }
+          ],
+          "server": {
+            "initialization": "bool",
+            "log": "str",
+            "rx_bytes": "int",
+            "status": "int",
+            "tunnel_ip": "str",
+            "tx_bytes": "int"
+          }
+        },
+        "status": "available"
+      }
+    },
+    "wifi": {
+      "get_config": {
+        "covered_by": "wifi_ifaces_get",
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "bandmode": "list",
+          "dfs_support": "bool",
+          "res": [
+            {
+              "band": "str",
+              "channel": "int",
+              "channels": [
+                "dict"
+              ],
+              "device": "str",
+              "encryptions": [
+                "str"
+              ],
+              "htmode": "str",
+              "htmodes": {
+                "11b/g/n": "int",
+                "11b/g/n/ax": "int",
+                "11g/n/ax": "int",
+                "11n/ax": "int",
+                "auto": "bool"
+              },
+              "hwmode": "str",
+              "hwmodes": [
+                "str"
+              ],
+              "ifaces": [
+                "dict"
+              ],
+              "txpower": "str"
+            }
+          ]
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_mlo_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "res": {
+            "encryptions": [
+              "str"
+            ],
+            "ifaces": "list",
+            "random_bssid": "bool"
+          }
+        },
+        "status": "available"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "res": [
+            {
+              "band": "str",
+              "channel": "int",
+              "name": "str",
+              "state": "str"
+            }
+          ]
+        },
+        "status": "available"
+      }
+    },
+    "zerotier": {
+      "get_config": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": {
+          "enabled": "bool",
+          "lan_enabled": "bool",
+          "wan_enabled": "bool"
+        },
+        "status": "available"
+      },
+      "get_info": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_list": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": -32601,
+        "params": null,
+        "risk": "read",
+        "schema": null,
+        "status": "absent"
+      },
+      "get_status": {
+        "covered_by": null,
+        "discovered_by": "catalog",
+        "error_code": null,
+        "params": null,
+        "risk": "read",
+        "schema": "list",
+        "status": "available"
+      }
+    }
+  },
+  "vendor": "GL.iNet"
+}
