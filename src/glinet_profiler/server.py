@@ -26,9 +26,8 @@ def _guard(request: web.Request, token: str) -> None:
         raise web.HTTPForbidden(text="local access only")
 
 
-def make_app(token: str, *, registry_url: str | None = None) -> web.Application:
-    """Build the aiohttp application. `registry_url` is reserved for a live registry (unused in v1)."""
-    _ = registry_url  # v1 uses the bundled registry
+def make_app(token: str) -> web.Application:
+    """Build the aiohttp application."""
     app = web.Application()
 
     async def index(_request: web.Request) -> web.StreamResponse:
@@ -77,13 +76,8 @@ def make_app(token: str, *, registry_url: str | None = None) -> web.Application:
         await resp.write_eof()
         return resp
 
-    async def api_registry(request: web.Request) -> web.Response:
-        _guard(request, token)
-        return web.json_response(registry_mod.load_manifest())
-
     app.router.add_get("/", index)
     app.router.add_post("/api/enumerate", api_enumerate)
-    app.router.add_get("/api/registry", api_registry)
     app.router.add_get("/{name}", asset)
     return app
 
@@ -109,7 +103,7 @@ def _open_browser(url: str) -> None:
         print("  (couldn't auto-open a browser — open the URL above)")
 
 
-def serve(*, port: int = 0, open_browser: bool = True, registry_url: str | None = None) -> None:
+def serve(*, port: int = 0, open_browser: bool = True) -> None:
     """Start the launcher on 127.0.0.1 (ephemeral port by default) and optionally open the browser."""
     token = secrets.token_urlsafe(16)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -117,7 +111,7 @@ def serve(*, port: int = 0, open_browser: bool = True, registry_url: str | None 
     sock.bind(("127.0.0.1", port))
     actual_port = sock.getsockname()[1]
     url = f"http://127.0.0.1:{actual_port}/?t={token}"
-    app = make_app(token, registry_url=registry_url)
+    app = make_app(token)
 
     async def _on_startup(_app: web.Application) -> None:
         print(f"glinet-profiler is running at:\n  {url}\nPress Ctrl+C to stop.")

@@ -5,8 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from glinet_profiler.enumerator.probe import device_id
-
+from .enumerator.probe import device_id
 from .registry import rebuild
 
 _MAC_RE = re.compile(r"(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}")

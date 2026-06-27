@@ -36,12 +36,11 @@ def main(argv: list[str] | None = None) -> int:
     # web-UI mode flags (used when no IP is given)
     parser.add_argument("--port", type=int, default=0, help="web UI port (default: ephemeral)")
     parser.add_argument("--no-browser", action="store_true", help="do not open a browser")
-    parser.add_argument("--registry-url", help="override the bundled registry (reserved)")
     args = parser.parse_args(argv)
 
     if args.ip:
         return asyncio.run(_capture_cli(args))
-    serve(port=args.port, open_browser=not args.no_browser, registry_url=args.registry_url)
+    serve(port=args.port, open_browser=not args.no_browser)
     return 0
 
 

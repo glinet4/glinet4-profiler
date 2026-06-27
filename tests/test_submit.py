@@ -3,7 +3,7 @@
 
 import urllib.parse
 
-from glinet_profiler.submit import prefilled_issue_url
+from glinet_profiler.submit import REGISTRY_REPO, prefilled_issue_url
 
 PROFILE = {
     "id": "mt6000_4.9.0",
@@ -14,8 +14,8 @@ PROFILE = {
 
 
 def test_prefilled_issue_url_points_at_form():
-    url = prefilled_issue_url(PROFILE, repo="owner/repo")
-    assert url.startswith("https://github.com/owner/repo/issues/new?")
+    url = prefilled_issue_url(PROFILE)
+    assert url.startswith(f"https://github.com/{REGISTRY_REPO}/issues/new?")
     query = urllib.parse.parse_qs(urllib.parse.urlparse(url).query)
     assert query["template"][0] == "profile-submission.yml"
     assert "mt6000" in query["title"][0] and "4.9.0" in query["title"][0]
