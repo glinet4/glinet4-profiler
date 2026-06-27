@@ -33,7 +33,11 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
     include_destructive: bool,
     on_progress: ProgressFn,
 ) -> dict[str, Any]:
-    """Run the read-only enumeration and return the raw report dict (performs I/O)."""
+    """Run the enumeration and return the raw report dict (performs I/O).
+
+    Read-only by default; ``dangerous`` calls write endpoints and ``include_destructive``
+    calls destructive ones (see ``capture``).
+    """
     import aiohttp  # pylint: disable=import-outside-toplevel  # noqa: PLC0415  (local so tests can patch _enumerate)
 
     from .enumerator.probe import (
