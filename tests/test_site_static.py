@@ -17,6 +17,7 @@ def test_index_has_controls():
         'id="search"',
         'id="available-only"',
         'id="not-wrapped"',
+        'id="count"',
         'id="results"',
         "app.js",
         "style.css",

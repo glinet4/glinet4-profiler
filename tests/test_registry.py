@@ -2,6 +2,7 @@
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
 import json
+from pathlib import Path
 
 from glinet_profiler.registry import build_manifest, load_manifest, lookup, rebuild
 
@@ -83,3 +84,30 @@ def test_rebuild_writes_index(tmp_path):
     manifest = json.loads((tmp_path / "index.json").read_text(encoding="utf-8"))
     assert manifest["devices"][0]["id"] == "x_1"
     assert manifest["devices"][0]["available_count"] == 1
+    assert manifest["devices"][0]["service_count"] == 1
+    assert manifest["devices"][0]["not_wrapped_count"] == 1
+
+
+def test_rebuild_missing_devices_dir(tmp_path):
+    count = rebuild(tmp_path)  # no devices/ subdir
+    assert count == 0
+    assert json.loads((tmp_path / "index.json").read_text(encoding="utf-8")) == {"devices": []}
+
+
+def test_build_manifest_sorts_by_model_then_firmware():
+    profiles = [
+        {"id": "b_1", "model": "b", "firmware_version": "1", "services": {}},
+        {"id": "a_2", "model": "a", "firmware_version": "2", "services": {}},
+        {"id": "a_1", "model": "a", "firmware_version": "1", "services": {}},
+    ]
+    ids = [d["id"] for d in build_manifest(profiles)["devices"]]
+    assert ids == ["a_1", "a_2", "b_1"]
+
+
+def test_committed_manifest_matches_devices():
+    data = Path(__file__).resolve().parent.parent / "src" / "glinet_profiler" / "data"
+    profiles = [
+        json.loads(p.read_text(encoding="utf-8")) for p in sorted((data / "devices").glob("*.json"))
+    ]
+    committed = json.loads((data / "index.json").read_text(encoding="utf-8"))
+    assert committed == build_manifest(profiles)
