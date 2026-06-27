@@ -1,18 +1,76 @@
-"""glinet-profiler console entry point."""
+"""glinet-profiler console entry point (web UI, or a one-shot CLI capture)."""
 
 import argparse
+import asyncio
+import getpass
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any
 
+from .capture import capture
+from .registry import lookup
 from .server import serve
+from .submit import prefilled_issue_url
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Start the glinet-profiler launcher."""
+    """Start the web launcher, or run a one-shot capture when a router IP is given."""
     parser = argparse.ArgumentParser(
-        prog="glinet-profiler", description="Local GL.iNet API profile capture launcher."
+        prog="glinet-profiler", description="Capture a GL.iNet device's API surface."
     )
-    parser.add_argument("--port", type=int, default=0, help="port (default: ephemeral)")
+    parser.add_argument(
+        "ip", nargs="?", help="router IP/host — run a one-shot capture (omit to start the web UI)"
+    )
+    parser.add_argument("--username", default="root", help="router username (default: root)")
+    parser.add_argument(
+        "--password",
+        help="router password (or set GLINET_PASSWORD, or be prompted). "
+        "A value passed here is visible to other processes — prefer the env var or the prompt.",
+    )
+    parser.add_argument("--no-ssh", action="store_true", help="skip SSH ground-truth discovery")
+    parser.add_argument(
+        "--output", "-o", help="write the profile JSON here (default: <id>.json in the cwd)"
+    )
+    # web-UI mode flags (used when no IP is given)
+    parser.add_argument("--port", type=int, default=0, help="web UI port (default: ephemeral)")
     parser.add_argument("--no-browser", action="store_true", help="do not open a browser")
     parser.add_argument("--registry-url", help="override the bundled registry (reserved)")
     args = parser.parse_args(argv)
+
+    if args.ip:
+        return asyncio.run(_capture_cli(args))
     serve(port=args.port, open_browser=not args.no_browser, registry_url=args.registry_url)
+    return 0
+
+
+async def _capture_cli(args: argparse.Namespace) -> int:
+    """Run a single headless capture; print the registry status + submission link."""
+    password = (
+        args.password or os.environ.get("GLINET_PASSWORD") or getpass.getpass("Router password: ")
+    )
+
+    async def _progress(event: dict[str, Any]) -> None:
+        print(f"  {event.get('message', '')}", file=sys.stderr)
+
+    try:
+        profile = await capture(
+            args.ip, args.username, password, ssh=not args.no_ssh, on_progress=_progress
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        print(f"capture failed: {exc}", file=sys.stderr)
+        return 1
+
+    out = Path(args.output) if args.output else Path(f"{profile['id']}.json")
+    out.write_text(json.dumps(profile, indent=2, sort_keys=True), encoding="utf-8")
+
+    known = lookup(profile.get("model", ""), profile.get("firmware_version", ""))
+    print(f"\nProfile: {profile['model']} ({profile['firmware_version']}) -> {out}")
+    if known:
+        print("Status:  already in the registry — nothing to submit.")
+    else:
+        print("Status:  NEW — contribute it:")
+        print(f"  open:   {prefilled_issue_url(profile)}")
+        print(f"  attach: {out}  (drag it into the issue)")
     return 0

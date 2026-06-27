@@ -15,6 +15,14 @@ async def _noop(_event: dict[str, Any]) -> None:
     """Default no-op progress sink."""
 
 
+def _base_url(host: str) -> str:
+    """Normalize a router IP / host / URL to a base URL (defaults to http://)."""
+    base = host.strip().rstrip("/")
+    if "://" not in base:
+        base = f"http://{base}"
+    return base
+
+
 async def _enumerate(  # pylint: disable=too-many-locals
     host: str, username: str, password: str, *, ssh: bool, on_progress: ProgressFn
 ) -> dict[str, Any]:
@@ -33,9 +41,9 @@ async def _enumerate(  # pylint: disable=too-many-locals
     )
     from .glinet_login import login  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
 
-    base = host.rstrip("/")
+    base = _base_url(host)
     rpc_url = f"{base}/rpc"
-    host_only = base.replace("https://", "").replace("http://", "").split("/")[0]
+    host_only = base.split("://", 1)[1].split("/")[0]
 
     surface = None
     if ssh:

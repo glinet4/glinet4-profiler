@@ -4,7 +4,14 @@
 import json
 
 import glinet_profiler.capture as capture_mod
-from glinet_profiler.capture import capture
+from glinet_profiler.capture import _base_url, capture
+
+
+def test_base_url_normalizes_bare_ip():
+    assert _base_url("192.168.8.1") == "http://192.168.8.1"
+    assert _base_url("http://192.168.8.1/") == "http://192.168.8.1"
+    assert _base_url("https://router") == "https://router"
+
 
 RAW = {
     "device": {
