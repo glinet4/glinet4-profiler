@@ -115,7 +115,7 @@ async def ssh_discover(  # pylint: disable=too-many-arguments,too-many-locals
     try:
         import paramiko  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
     except ImportError as exc:  # pragma: no cover - exercised via integration env
-        raise SshUnavailable("paramiko not installed (pip install 'gli4py[ssh]')") from exc
+        raise SshUnavailable("paramiko not installed (pip install paramiko)") from exc
 
     def _run() -> tuple[str, dict[str, str], dict[str, str]]:  # pylint: disable=too-many-locals
         client = paramiko.SSHClient()
