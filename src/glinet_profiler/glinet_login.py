@@ -40,6 +40,10 @@ async def login(session: aiohttp.ClientSession, rpc_url: str, username: str, pas
         rpc_url, json=_no_auth_payload("challenge", {"username": username})
     ) as resp:
         challenge: dict[str, Any] = (await resp.json(content_type=None)).get("result", {})
+    if not all(key in challenge for key in ("alg", "salt", "nonce")):
+        raise ValueError(
+            "login failed: invalid challenge response (check the username and router URL)"
+        )
     hsh = await asyncio.to_thread(
         compute_hash,
         challenge["alg"],

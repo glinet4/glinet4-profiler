@@ -18,6 +18,15 @@ def test_compute_hash_sha_sizes():
     assert len(compute_hash(6, "abcdefgh", "n", "sha512", "root", "pw")) == 128
 
 
+def test_compute_hash_sha_deterministic():
+    assert compute_hash(5, "abcdefgh", "n", "sha256", "root", "pw") == compute_hash(
+        5, "abcdefgh", "n", "sha256", "root", "pw"
+    )
+    assert compute_hash(6, "abcdefgh", "n", "sha512", "root", "pw") == compute_hash(
+        6, "abcdefgh", "n", "sha512", "root", "pw"
+    )
+
+
 def test_compute_hash_rejects_unsupported():
     with pytest.raises(ValueError):
         compute_hash(9, "s", "n", "md5", "u", "p")
@@ -61,6 +70,14 @@ async def test_login_returns_sid_and_posts_challenge_then_login():
     assert session.posted[0]["method"] == "challenge"
     assert session.posted[1]["method"] == "login"
     assert "hash" in session.posted[1]["params"]
+    assert session.posted[0]["params"]["username"] == "root"
+    assert session.posted[1]["params"]["username"] == "root"
+
+
+async def test_login_raises_on_invalid_challenge():
+    session = _FakeSession([{"error": {"code": -1, "message": "bad user"}}])
+    with pytest.raises(ValueError):
+        await login(session, "http://x/rpc", "root", "pw")
 
 
 async def test_login_raises_without_sid():
