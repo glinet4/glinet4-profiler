@@ -20,6 +20,8 @@ def test_index_has_form_controls():
         'id="actions"',
         'id="download"',
         'id="submit"',
+        'id="progress"',
+        'id="progress-msg"',
         "app.js",
         "style.css",
     ):
@@ -31,3 +33,10 @@ def test_app_js_uses_token_and_endpoint():
     assert "api/enumerate" in js
     assert "X-Profiler-Token" in js
     assert "submit_url" in js  # opens the server-built prefilled issue URL
+
+
+def test_app_js_streams_progress():
+    js = (WEB / "app.js").read_text(encoding="utf-8")
+    assert "getReader" in js  # reads the NDJSON stream incrementally
+    assert "setProgress" in js  # updates the live progress panel
+    assert '"progress"' in js or "'progress'" in js  # handles progress events

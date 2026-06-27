@@ -18,6 +18,11 @@
     <label class="chk"><input id="ssh" type="checkbox" checked> try SSH ground-truth (default; falls back automatically)</label>
     <button type="submit">Capture</button>
   </form>
+  <div id="progress" class="progress" hidden>
+    <span class="spinner"></span>
+    <span id="progress-msg"></span>
+    <span id="progress-count" class="count"></span>
+  </div>
   <p id="status" class="status"></p>
   <div id="banner"></div>
   <div id="actions" hidden>

@@ -1,6 +1,8 @@
 """Server API tests (aiohttp test client; no router)."""
 # pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument
 
+import json
+
 import pytest
 
 import glinet_profiler.capture as capture_mod
@@ -29,7 +31,11 @@ PROFILE = {
 
 @pytest.fixture
 async def client(aiohttp_client, monkeypatch):
-    async def fake_capture(host, username, password, *, ssh=False):  # noqa: ARG001
+    async def fake_capture(host, username, password, *, ssh=False, on_progress=None):  # noqa: ARG001
+        if on_progress:
+            await on_progress(
+                {"event": "progress", "phase": "probe", "done": 1, "message": "probing"}
+            )
         return PROFILE
 
     monkeypatch.setattr(capture_mod, "capture", fake_capture)
@@ -41,17 +47,20 @@ async def test_enumerate_requires_token(client):
     assert resp.status == 401
 
 
-async def test_enumerate_with_token_returns_profile_lookup_submit(client):
+async def test_enumerate_streams_progress_then_result(client):
     resp = await client.post(
         "/api/enumerate",
         headers={"X-Profiler-Token": TOKEN},
         json={"host": "http://x", "username": "root", "password": "p", "ssh": False},
     )
     assert resp.status == 200
-    data = await resp.json()
-    assert data["profile"]["model"] == "mt6000"
-    assert data["lookup"] is not None  # mt6000_4.9.0 is in the bundled registry
-    assert "issues/new" in data["submit_url"]
+    events = [json.loads(line) for line in (await resp.text()).splitlines() if line.strip()]
+    kinds = [e["event"] for e in events]
+    assert "progress" in kinds  # streamed live progress
+    result = next(e for e in events if e["event"] == "result")
+    assert result["profile"]["model"] == "mt6000"
+    assert result["lookup"] is not None  # mt6000_4.9.0 is in the bundled registry
+    assert "issues/new" in result["submit_url"]
 
 
 async def test_index_is_served(client):

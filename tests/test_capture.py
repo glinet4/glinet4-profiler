@@ -31,7 +31,7 @@ RAW = {
 
 
 async def test_capture_returns_sanitized_profile(monkeypatch):
-    async def fake_enumerate(host, username, password, *, ssh):  # noqa: ARG001
+    async def fake_enumerate(host, username, password, *, ssh, on_progress):  # noqa: ARG001
         return RAW
 
     monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
@@ -47,10 +47,27 @@ async def test_capture_returns_sanitized_profile(monkeypatch):
 async def test_capture_passes_ssh_flag(monkeypatch):
     seen = {}
 
-    async def fake_enumerate(host, username, password, *, ssh):  # noqa: ARG001
+    async def fake_enumerate(host, username, password, *, ssh, on_progress):  # noqa: ARG001
         seen["ssh"] = ssh
         return RAW
 
     monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
     await capture("http://x", "root", "pw", ssh=True)
     assert seen["ssh"] is True
+
+
+async def test_capture_forwards_progress(monkeypatch):
+    events = []
+
+    async def record(event):
+        events.append(event)
+
+    async def fake_enumerate(host, username, password, *, ssh, on_progress):  # noqa: ARG001
+        await on_progress({"event": "progress", "phase": "probe", "done": 1, "message": "x"})
+        return RAW
+
+    monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
+    await capture("http://x", "root", "pw", on_progress=record)
+    phases = [e["phase"] for e in events]
+    assert "probe" in phases  # forwarded from _enumerate
+    assert "sanitize" in phases  # emitted by capture() after enumeration

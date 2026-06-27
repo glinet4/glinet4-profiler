@@ -1,11 +1,13 @@
 """The local launcher web server (aiohttp, 127.0.0.1, token-guarded API)."""
 
+import json
 import os
 import secrets
 import socket
 import webbrowser
 from importlib import resources
 from pathlib import Path
+from typing import Any
 
 from aiohttp import web
 
@@ -39,23 +41,41 @@ def make_app(token: str, *, registry_url: str | None = None) -> web.Application:
             raise web.HTTPNotFound()
         return web.FileResponse(str(path))
 
-    async def api_enumerate(request: web.Request) -> web.Response:
+    async def api_enumerate(request: web.Request) -> web.StreamResponse:
         _guard(request, token)
         body = await request.json()
-        profile = await capture_mod.capture(
-            body["host"],
-            body.get("username") or "root",
-            body.get("password", ""),
-            ssh=bool(body.get("ssh", True)),
+        resp = web.StreamResponse(
+            headers={"Content-Type": "application/x-ndjson", "Cache-Control": "no-store"}
         )
-        match = registry_mod.lookup(profile.get("model", ""), profile.get("firmware_version", ""))
-        return web.json_response(
-            {
-                "profile": profile,
-                "lookup": match,
-                "submit_url": submit_mod.prefilled_issue_url(profile),
-            }
-        )
+        await resp.prepare(request)
+
+        async def emit(event: dict[str, Any]) -> None:
+            await resp.write((json.dumps(event) + "\n").encode())
+            print(f"[capture] {event.get('message') or event.get('event')}")
+
+        try:
+            profile = await capture_mod.capture(
+                body["host"],
+                body.get("username") or "root",
+                body.get("password", ""),
+                ssh=bool(body.get("ssh", True)),
+                on_progress=emit,
+            )
+            match = registry_mod.lookup(
+                profile.get("model", ""), profile.get("firmware_version", "")
+            )
+            await emit(
+                {
+                    "event": "result",
+                    "profile": profile,
+                    "lookup": match,
+                    "submit_url": submit_mod.prefilled_issue_url(profile),
+                }
+            )
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            await emit({"event": "error", "message": str(exc)})
+        await resp.write_eof()
+        return resp
 
     async def api_registry(request: web.Request) -> web.Response:
         _guard(request, token)
