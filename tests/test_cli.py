@@ -10,20 +10,48 @@ PROFILE = {
     "services": {"system": {"get_info": {"status": "available", "covered_by": None}}},
 }
 
+MAN = {"devices": [{"id": "mt6000_4.9.0", "model": "mt6000", "firmware_version": "4.9.0"}]}
 
-def test_capture_mode_writes_profile_and_submit_link(monkeypatch, tmp_path, capsys):
+
+def test_capture_mode_new_device_submit_link(monkeypatch, tmp_path, capsys):
+    """A device not in the manifest → NEW status + submission link."""
+
     async def fake_capture(ip, username, password, *, ssh=True, on_progress=None):  # noqa: ARG001
         return PROFILE
 
+    async def fake_fetch(url, *, timeout=5.0):  # noqa: ARG001
+        return MAN  # manifest reachable but zz1300 not in it
+
     monkeypatch.setattr(cli_mod, "capture", fake_capture)
+    monkeypatch.setattr(cli_mod, "fetch_manifest", fake_fetch)
     monkeypatch.chdir(tmp_path)
     rc = cli_mod.main(["192.168.8.1", "--password", "x", "--no-ssh"])
     assert rc == 0
     out = tmp_path / "zz1300_9.9.9.json"
     assert out.exists()
     stdout = capsys.readouterr().out
-    assert "issues/new" in stdout  # NEW device (not in the bundled registry) → submission link
+    assert "issues/new" in stdout
     assert "zz1300_9.9.9.json" in stdout
+    assert "NEW" in stdout
+
+
+def test_capture_mode_offline_submit_link(monkeypatch, tmp_path, capsys):
+    """When fetch_manifest returns None → offline message + submission link."""
+
+    async def fake_capture(ip, username, password, *, ssh=True, on_progress=None):  # noqa: ARG001
+        return PROFILE
+
+    async def fake_fetch(url, *, timeout=5.0):  # noqa: ARG001
+        return None  # offline
+
+    monkeypatch.setattr(cli_mod, "capture", fake_capture)
+    monkeypatch.setattr(cli_mod, "fetch_manifest", fake_fetch)
+    monkeypatch.chdir(tmp_path)
+    rc = cli_mod.main(["192.168.8.1", "--password", "x", "--no-ssh"])
+    assert rc == 0
+    stdout = capsys.readouterr().out
+    assert "couldn't reach the registry" in stdout
+    assert "issues/new" in stdout
 
 
 def test_no_ip_starts_web_server(monkeypatch):

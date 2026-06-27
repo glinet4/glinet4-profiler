@@ -26,7 +26,9 @@ def _guard(request: web.Request, token: str) -> None:
         raise web.HTTPForbidden(text="local access only")
 
 
-def make_app(token: str) -> web.Application:
+def make_app(
+    token: str, *, registry_url: str = registry_mod.DEFAULT_REGISTRY_URL
+) -> web.Application:
     """Build the aiohttp application."""
     app = web.Application()
 
@@ -60,14 +62,16 @@ def make_app(token: str) -> web.Application:
                 ssh=bool(body.get("ssh", True)),
                 on_progress=emit,
             )
+            manifest = await registry_mod.fetch_manifest(registry_url)
             match = registry_mod.lookup(
-                profile.get("model", ""), profile.get("firmware_version", "")
+                profile.get("model", ""), profile.get("firmware_version", ""), manifest
             )
             await emit(
                 {
                     "event": "result",
                     "profile": profile,
                     "lookup": match,
+                    "registry_reachable": manifest is not None,
                     "submit_url": submit_mod.prefilled_issue_url(profile),
                 }
             )
@@ -103,7 +107,12 @@ def _open_browser(url: str) -> None:
         print("  (couldn't auto-open a browser — open the URL above)")
 
 
-def serve(*, port: int = 0, open_browser: bool = True) -> None:
+def serve(
+    *,
+    port: int = 0,
+    open_browser: bool = True,
+    registry_url: str = registry_mod.DEFAULT_REGISTRY_URL,
+) -> None:
     """Start the launcher on 127.0.0.1 (ephemeral port by default) and optionally open the browser."""
     token = secrets.token_urlsafe(16)
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -111,7 +120,7 @@ def serve(*, port: int = 0, open_browser: bool = True) -> None:
     sock.bind(("127.0.0.1", port))
     actual_port = sock.getsockname()[1]
     url = f"http://127.0.0.1:{actual_port}/?t={token}"
-    app = make_app(token)
+    app = make_app(token, registry_url=registry_url)
 
     async def _on_startup(_app: web.Application) -> None:
         print(f"glinet-profiler is running at:\n  {url}\nPress Ctrl+C to stop.")

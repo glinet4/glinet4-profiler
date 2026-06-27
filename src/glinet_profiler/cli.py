@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .capture import capture
-from .registry import lookup
+from .registry import DEFAULT_REGISTRY_URL, fetch_manifest, lookup
 from .server import serve
 from .submit import prefilled_issue_url
 
@@ -36,11 +36,16 @@ def main(argv: list[str] | None = None) -> int:
     # web-UI mode flags (used when no IP is given)
     parser.add_argument("--port", type=int, default=0, help="web UI port (default: ephemeral)")
     parser.add_argument("--no-browser", action="store_true", help="do not open a browser")
+    parser.add_argument(
+        "--registry-url",
+        default=DEFAULT_REGISTRY_URL,
+        help="registry manifest URL (default: live GitHub Pages URL)",
+    )
     args = parser.parse_args(argv)
 
     if args.ip:
         return asyncio.run(_capture_cli(args))
-    serve(port=args.port, open_browser=not args.no_browser)
+    serve(port=args.port, open_browser=not args.no_browser, registry_url=args.registry_url)
     return 0
 
 
@@ -64,9 +69,14 @@ async def _capture_cli(args: argparse.Namespace) -> int:
     out = Path(args.output) if args.output else Path(f"{profile['id']}.json")
     out.write_text(json.dumps(profile, indent=2, sort_keys=True), encoding="utf-8")
 
-    known = lookup(profile.get("model", ""), profile.get("firmware_version", ""))
+    manifest = await fetch_manifest(args.registry_url)
+    known = lookup(profile.get("model", ""), profile.get("firmware_version", ""), manifest)
     print(f"\nProfile: {profile['model']} ({profile['firmware_version']}) -> {out}")
-    if known:
+    if manifest is None:
+        print("Status:  couldn't reach the registry — submit anyway (the bot dedups on the PR):")
+        print(f"  open:   {prefilled_issue_url(profile)}")
+        print(f"  attach: {out}  (drag it into the issue)")
+    elif known:
         print("Status:  already in the registry — nothing to submit.")
     else:
         print("Status:  NEW — contribute it:")

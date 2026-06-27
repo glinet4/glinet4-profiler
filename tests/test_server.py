@@ -6,6 +6,7 @@ import json
 import pytest
 
 import glinet_profiler.capture as capture_mod
+import glinet_profiler.registry as registry_mod
 from glinet_profiler.server import make_app
 
 TOKEN = "test-token"
@@ -27,6 +28,7 @@ PROFILE = {
         }
     },
 }
+MAN = {"devices": [{"id": "mt6000_4.9.0", "model": "mt6000", "firmware_version": "4.9.0"}]}
 
 
 @pytest.fixture
@@ -38,7 +40,11 @@ async def client(aiohttp_client, monkeypatch):
             )
         return PROFILE
 
+    async def fake_fetch(url: str, *, timeout: float = 5.0) -> dict:  # noqa: ARG001
+        return MAN
+
     monkeypatch.setattr(capture_mod, "capture", fake_capture)
+    monkeypatch.setattr(registry_mod, "fetch_manifest", fake_fetch)
     return await aiohttp_client(make_app(TOKEN))
 
 
@@ -59,7 +65,8 @@ async def test_enumerate_streams_progress_then_result(client):
     assert "progress" in kinds  # streamed live progress
     result = next(e for e in events if e["event"] == "result")
     assert result["profile"]["model"] == "mt6000"
-    assert result["lookup"] is not None  # mt6000_4.9.0 is in the bundled registry
+    assert result["lookup"] is not None  # mt6000_4.9.0 is in the mocked manifest
+    assert result["registry_reachable"] is True
     assert "issues/new" in result["submit_url"]
 
 

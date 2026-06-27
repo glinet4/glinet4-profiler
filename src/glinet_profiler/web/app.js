@@ -76,9 +76,13 @@ async function onCapture(e) {
     if (errorMsg) { $("result").innerHTML = `<p class="error">${escapeHtml(errorMsg)}</p>`; return; }
     if (!result) { $("result").innerHTML = "<p class='error'>No result received.</p>"; return; }
     profile = result.profile; submitUrl = result.submit_url || "";
-    $("banner").innerHTML = result.lookup
-      ? `<div class="known">✅ <b>${escapeHtml(profile.model)}</b> (${escapeHtml(profile.firmware_version)}) is already in the registry.</div>`
-      : `<div class="new">🆕 <b>${escapeHtml(profile.model)}</b> (${escapeHtml(profile.firmware_version)}) is new — please contribute it!</div>`;
+    if (result.registry_reachable === false) {
+      $("banner").innerHTML = `<div class="new">⚠️ Couldn't reach the registry — submit anyway; the bot will dedup.</div>`;
+    } else {
+      $("banner").innerHTML = result.lookup
+        ? `<div class="known">✅ <b>${escapeHtml(profile.model)}</b> (${escapeHtml(profile.firmware_version)}) is already in the registry.</div>`
+        : `<div class="new">🆕 <b>${escapeHtml(profile.model)}</b> (${escapeHtml(profile.firmware_version)}) is new — please contribute it!</div>`;
+    }
     $("result").innerHTML = renderProfile(profile);
     $("actions").hidden = false;
     $("submit").classList.toggle("primary", !result.lookup);
