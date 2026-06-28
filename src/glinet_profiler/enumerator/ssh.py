@@ -37,6 +37,7 @@ _VERB_PREFIXES = (
 )
 _VALIDATOR_ENTRY = re.compile(r'\[\s*["\']([A-Za-z0-9_]+)["\']\s*\]\s*=\s*\{([^}]*)\}')
 _PARAM = re.compile(r'["\']([A-Za-z0-9_]+)["\']')
+_TOKEN = re.compile(r"[a-z][a-z0-9_]{2,}")  # lowercase identifiers (for bytecode string extraction)
 
 
 def _canonical_service(name: str) -> str:
@@ -48,31 +49,71 @@ def _looks_like_method(token: str) -> bool:
     return any(token.startswith(p) for p in _VERB_PREFIXES)
 
 
-def parse_handlers(listing: list[str], sources: dict[str, str]) -> dict[str, list[str]]:
-    """Extract service -> method candidates from handler dir + source/strings."""
+def parse_handlers(
+    listing: list[str], sources: dict[str, str]
+) -> tuple[dict[str, list[str]], set[str]]:
+    """Extract service -> method candidates from the handler dir + source/strings.
+
+    Returns ``(methods, untrusted)``. ``untrusted`` is the set of services whose method
+    names came from a compiled ``.so`` strings dump (noisy) rather than Lua
+    ``function M.x`` definitions — the caller treats their write candidates as low-confidence.
+    """
     out: dict[str, set[str]] = {}
+    untrusted: set[str] = set()
     for name in listing:
         if name.endswith(".lua"):
             continue
         service = _canonical_service(name)
         text = sources.get(name, "")
         methods = set(_LUA_FUNC.findall(text)) | set(_LUA_ASSIGN.findall(text))
-        if not methods:  # .so / bytecode strings dump
+        if not methods:  # .so / bytecode strings dump — low-confidence candidates
             methods = {t for t in text.split() if _looks_like_method(t)}
+            if methods:
+                untrusted.add(service)
         out.setdefault(service, set()).update(methods)
-    return {s: sorted(m) for s, m in out.items() if m}
+    return {s: sorted(m) for s, m in out.items() if m}, untrusted
 
 
 def parse_validators(sources: dict[str, str]) -> dict[str, dict[str, list[str]]]:
-    """Extract service -> {method: [params]} from gl-validator.d files."""
+    """Extract service -> {method: [params]} from gl-validator.d files.
+
+    Source Lua yields method + params via the table-entry regex. GL.iNet ships these
+    *compiled* (Lua bytecode), so fall back to pulling verb-prefixed method-name strings
+    out of the bytecode (params aren't recoverable there, so they come back empty).
+    """
     out: dict[str, dict[str, list[str]]] = {}
     for service, text in sources.items():
         methods: dict[str, list[str]] = {}
         for method, body in _VALIDATOR_ENTRY.findall(text):
             methods[method] = _PARAM.findall(body)
+        if not methods:  # compiled bytecode: method names survive as readable strings
+            for token in _TOKEN.findall(text):
+                if _looks_like_method(token):
+                    methods.setdefault(token, [])
         if methods:
             out[service] = methods
     return out
+
+
+def merge_surface(
+    handlers: dict[str, list[str]],
+    untrusted: set[str],
+    validators: dict[str, dict[str, list[str]]],
+) -> dict[str, list[str]]:
+    """Fold validator methods into the handler map and de-noise untrusted (.so) services.
+
+    For a ``.so`` service we keep reads (the HTTP probe filters bogus ones to ABSENT) but
+    drop WRITE candidates unless a validator confirms them — that removes the strings-dump noise.
+    """
+    for service, methods in validators.items():
+        handlers.setdefault(service, [])
+        handlers[service] = sorted(set(handlers[service]) | set(methods))
+    for service in untrusted:
+        confirmed = set(validators.get(service, {}))
+        handlers[service] = sorted(
+            m for m in handlers.get(service, []) if is_read_method(m) or m in confirmed
+        )
+    return handlers
 
 
 def parse_account_acl(rows: list[tuple[str, str]]) -> tuple[list[dict[str, str]], bool]:
@@ -164,11 +205,9 @@ async def ssh_discover(  # pylint: disable=too-many-arguments,too-many-locals
 
     recon, handler_sources, validator_sources = await asyncio.to_thread(_run)
 
-    handlers = parse_handlers(_section(recon, "HANDLERS"), handler_sources)
+    handlers, untrusted = parse_handlers(_section(recon, "HANDLERS"), handler_sources)
     validators = parse_validators(validator_sources)
-    for service, methods in validators.items():
-        handlers.setdefault(service, [])
-        handlers[service] = sorted(set(handlers[service]) | set(methods))
+    handlers = merge_surface(handlers, untrusted, validators)
     accounts, _root_full = parse_account_acl(
         [tuple(row.split("|", 1)) for row in _section(recon, "ACCOUNTS") if "|" in row]  # type: ignore[misc]
     )
@@ -185,6 +224,7 @@ async def ssh_discover(  # pylint: disable=too-many-arguments,too-many-locals
 __all__ = [
     "parse_handlers",
     "parse_validators",
+    "merge_surface",
     "parse_account_acl",
     "is_read_method",
     "SshUnavailable",
