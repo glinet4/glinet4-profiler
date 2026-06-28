@@ -91,7 +91,12 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
             if args is not None:
                 params.append(args)
             payload = {"jsonrpc": "2.0", "id": 0, "method": "call", "params": params}
-            async with session.post(rpc_url, json=payload) as resp:
+            # Per-request cap: some methods make the router do a slow external lookup
+            # (e.g. wg-client.get_country_url) and otherwise hang forever — time out and move on
+            # (the enumerator's _probe catches it and records the method UNREACHABLE).
+            async with session.post(
+                rpc_url, json=payload, timeout=aiohttp.ClientTimeout(total=15)
+            ) as resp:
                 data: dict[str, Any] = await resp.json(content_type=None)
             probed += 1
             await on_progress(

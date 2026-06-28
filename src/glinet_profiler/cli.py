@@ -54,7 +54,11 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     if args.ip:
-        return asyncio.run(_capture_cli(args))
+        try:
+            return asyncio.run(_capture_cli(args))
+        except KeyboardInterrupt:
+            print("\ninterrupted.", file=sys.stderr)
+            return 130
     serve(port=args.port, open_browser=not args.no_browser, registry_url=args.registry_url)
     return 0
 
