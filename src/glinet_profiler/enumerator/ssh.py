@@ -66,9 +66,11 @@ def parse_handlers(
         service = _canonical_service(name)
         text = sources.get(name, "")
         methods = set(_LUA_FUNC.findall(text)) | set(_LUA_ASSIGN.findall(text))
-        if not methods:  # .so / bytecode strings dump — low-confidence candidates
+        if not methods:  # compiled handler: pull method-name candidates from the strings dump
             methods = {t for t in text.split() if _looks_like_method(t)}
-            if methods:
+            # Only ELF `.so` (C binaries) produce noisy strings; bare-name compiled-Lua
+            # handlers dump clean function names, so distrust just the `.so` files.
+            if methods and name.endswith(".so"):
                 untrusted.add(service)
         out.setdefault(service, set()).update(methods)
     return {s: sorted(m) for s, m in out.items() if m}, untrusted
