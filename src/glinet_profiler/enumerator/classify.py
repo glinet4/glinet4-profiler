@@ -7,6 +7,7 @@ from .models import ProbeResult, ProbeStatus
 _CODE_STATUS = {
     -32601: ProbeStatus.ABSENT,
     -32602: ProbeStatus.NEEDS_PARAMS,
+    -32603: ProbeStatus.ERROR,  # internal error: method exists but failed (often feature not configured)
     -32000: ProbeStatus.AUTH_ERROR,
     -1: ProbeStatus.TOKEN_ERROR,
 }

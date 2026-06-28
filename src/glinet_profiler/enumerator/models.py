@@ -23,6 +23,8 @@ class ProbeStatus(StrEnum):
     DISCOVERED = "discovered"
     ABSENT = "absent"
     NEEDS_PARAMS = "needs_params"
+    # method recognized but returned an internal error (-32603), often a feature not configured
+    ERROR = "error"
     AUTH_ERROR = "auth_error"
     TOKEN_ERROR = "token_error"
     OTHER = "other"

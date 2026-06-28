@@ -95,7 +95,7 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
             # (e.g. wg-client.get_country_url) and otherwise hang forever — time out and move on
             # (the enumerator's _probe catches it and records the method UNREACHABLE).
             async with session.post(
-                rpc_url, json=payload, timeout=aiohttp.ClientTimeout(total=15)
+                rpc_url, json=payload, timeout=aiohttp.ClientTimeout(total=12)
             ) as resp:
                 data: dict[str, Any] = await resp.json(content_type=None)
             probed += 1

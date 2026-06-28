@@ -1,6 +1,8 @@
 """Async enumeration engine: probe a device through an injectable caller."""
 
+import asyncio
 import re
+from collections.abc import Awaitable
 from typing import Any
 
 from .catalog import CATALOG, COMMON_READ_METHODS, DESTRUCTIVE_METHODS, is_read_method, risk_of
@@ -16,6 +18,9 @@ from .wordlist import (
 )
 
 _SLUG = re.compile(r"[^a-z0-9.]+")
+_CONCURRENCY = 3  # GL.iNet's RPC backend is fcgiwrap with only 4 CGI workers on my MT6000; stay under that
+# so a few slow/hung methods can't starve the router's own UI (nginx fastcgi_read_timeout is 300s,
+# so a hung glc keeps a worker busy long after our client times out).
 
 
 def device_id(device: dict[str, Any]) -> str:
@@ -96,28 +101,58 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
     if brute not in {"off", "dangerous", "dangerous_full"}:
         raise ValueError(f"brute must be 'off', 'dangerous', or 'dangerous_full'; got {brute!r}")
 
+    sem = asyncio.Semaphore(_CONCURRENCY)
+
+    async def _report(
+        service: str,
+        method: str,
+        mrisk: Risk,
+        discovered_by: str,
+        params: list[str] | None = None,
+    ) -> MethodReport:
+        """Probe one (service, method) under the concurrency limit and build its report."""
+        async with sem:
+            status, code, value = await _probe(caller, service, method)
+        return MethodReport(
+            service=service,
+            method=method,
+            status=status,
+            error_code=code,
+            risk=mrisk,
+            discovered_by=discovered_by,
+            params=params,
+            schema=schema_of(value) if value is not None else None,
+            value=redact(value, enabled=redact_values) if value is not None else None,
+            covered_by=covered_by(service, method),
+        )
+
+    def _discovered(service: str, method: str, mrisk: Risk, params: list[str] | None) -> MethodReport:
+        """Record an SSH-discovered method without any HTTP call (from the device's files)."""
+        return MethodReport(
+            service=service,
+            method=method,
+            status=ProbeStatus.DISCOVERED,
+            error_code=None,
+            risk=mrisk,
+            discovered_by="ssh",
+            params=params,
+            schema=None,
+            value=None,
+            covered_by=covered_by(service, method),
+        )
+
     if device_info is None:
         status, _code, value = await _probe(caller, "system", "get_info")
         device_info = value if status is ProbeStatus.AVAILABLE and isinstance(value, dict) else {}
 
-    methods: list[MethodReport] = []
-    for service, method, risk in _catalog_targets():
+    # catalog pass — concurrent; asyncio.gather preserves input order
+    targets = _catalog_targets()
+    for service, method, _risk in targets:
         assert is_read_method(method), f"refusing non-read method {service}.{method}"
-        status, code, value = await _probe(caller, service, method)
-        methods.append(
-            MethodReport(
-                service=service,
-                method=method,
-                status=status,
-                error_code=code,
-                risk=risk,
-                discovered_by="catalog",
-                params=None,
-                schema=schema_of(value) if value is not None else None,
-                value=redact(value, enabled=redact_values) if value is not None else None,
-                covered_by=covered_by(service, method),
-            )
-        )
+    methods: list[MethodReport] = list(
+        await asyncio.gather(*[_report(s, m, r, "catalog") for s, m, r in targets])
+    )
+
     probed = {(m.service, m.method) for m in methods}
     if brute != "off":
         plan = brute_plan(
@@ -125,55 +160,16 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
             dangerous_full=(brute == "dangerous_full"),
             include_destructive=include_destructive,
         )
-        for service, method in plan:
-            if (service, method) in probed:
-                continue
-            status, code, value = await _probe(caller, service, method)
-            if status is ProbeStatus.ABSENT:
-                continue  # only record hits
-            methods.append(
-                MethodReport(
-                    service=service,
-                    method=method,
-                    status=status,
-                    error_code=code,
-                    risk=risk_of(method),
-                    discovered_by="brute",
-                    params=None,
-                    schema=schema_of(value) if value is not None else None,
-                    value=redact(value, enabled=redact_values) if value is not None else None,
-                    covered_by=covered_by(service, method),
-                )
-            )
+        todo = [(s, m) for s, m in plan if (s, m) not in probed]
+        for rec in await asyncio.gather(*[_report(s, m, risk_of(m), "brute") for s, m in todo]):
+            if rec.status is not ProbeStatus.ABSENT:  # only record hits
+                methods.append(rec)
+
     probed = {(m.service, m.method) for m in methods}
     if ssh_surface is not None:
-
-        def _record(
-            service: str,
-            method: str,
-            status: ProbeStatus,
-            code: int | None,
-            value: object,
-            mrisk: Risk,
-            params: list[str] | None,
-        ) -> None:
-            methods.append(
-                MethodReport(
-                    service=service,
-                    method=method,
-                    status=status,
-                    error_code=code,
-                    risk=mrisk,
-                    discovered_by="ssh",
-                    params=params,
-                    schema=schema_of(value) if value is not None else None,
-                    value=redact(value, enabled=redact_values) if value is not None else None,
-                    covered_by=covered_by(service, method),
-                )
-            )
-
         # destructive probes (reboot/reset/upgrade) run LAST so one that kills the
         # SSH/HTTP session doesn't throw away the rest of the scan.
+        tasks: list[Awaitable[MethodReport]] = []
         deferred: list[tuple[str, str, list[str] | None]] = []
         for service, smethods in ssh_surface.methods.items():
             params_map = ssh_surface.params.get(service, {})
@@ -183,20 +179,15 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
                 probed.add((service, method))
                 mrisk = risk_of(method)
                 params = params_map.get(method)
-                if is_read_method(method):
-                    status, code, value = await _probe(caller, service, method)
-                elif probe_writes and mrisk is Risk.WRITE:
-                    status, code, value = await _probe(caller, service, method)  # config-changing
+                if is_read_method(method) or (probe_writes and mrisk is Risk.WRITE):
+                    tasks.append(_report(service, method, mrisk, "ssh", params))
                 elif probe_writes and include_destructive and mrisk is Risk.DANGEROUS:
                     deferred.append((service, method, params))
-                    continue
                 else:
-                    # capture from the device's files; never HTTP-call a non-read endpoint
-                    status, code, value = ProbeStatus.DISCOVERED, None, None
-                _record(service, method, status, code, value, mrisk, params)
+                    methods.append(_discovered(service, method, mrisk, params))
+        methods.extend(await asyncio.gather(*tasks))
         for service, method, params in deferred:
-            status, code, value = await _probe(caller, service, method)
-            _record(service, method, status, code, value, Risk.DANGEROUS, params)
+            methods.append(await _report(service, method, Risk.DANGEROUS, "ssh", params))
         device_info = {
             **(device_info or {}),
             "accounts": ssh_surface.accounts,

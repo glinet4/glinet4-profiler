@@ -22,6 +22,12 @@ def test_invalid_params_is_needs_params():
     assert r.status is ProbeStatus.NEEDS_PARAMS
 
 
+def test_internal_error_is_error():
+    r = classify({"error": {"code": -32603, "message": "Internal error"}})
+    assert r.status is ProbeStatus.ERROR  # method exists but errored (feature often not configured)
+    assert r.error_code == -32603
+
+
 def test_auth_and_token_errors():
     assert classify({"error": {"code": -32000}}).status is ProbeStatus.AUTH_ERROR
     assert classify({"error": {"code": -1}}).status is ProbeStatus.TOKEN_ERROR
