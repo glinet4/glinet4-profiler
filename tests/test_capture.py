@@ -1,10 +1,13 @@
 """capture() tests against a mocked enumeration (no router)."""
-# pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument
+# pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument,too-few-public-methods
 
 import json
 
+import aiohttp
+import pytest
+
 import glinet_profiler.capture as capture_mod
-from glinet_profiler.capture import _base_url, capture
+from glinet_profiler.capture import _base_url, _rpc_post, capture
 
 
 def test_base_url_normalizes_bare_ip():
@@ -99,3 +102,60 @@ async def test_capture_forwards_progress(monkeypatch):
     phases = [e["phase"] for e in events]
     assert "probe" in phases  # forwarded from _enumerate
     assert "sanitize" in phases  # emitted by capture() after enumeration
+
+
+class _Resp:
+    def __init__(self, status, data):
+        self.status, self._data = status, data
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *_a):
+        return False
+
+    async def json(self, content_type=None):
+        return self._data
+
+
+class _Session:
+    """Fake aiohttp session: post() yields queued _Resp objects, or raises a queued exception."""
+
+    def __init__(self, outcomes):
+        self._outcomes = list(outcomes)
+        self.calls = 0
+
+    def post(self, url, json=None, timeout=None):  # noqa: A002
+        outcome = self._outcomes[self.calls]
+        self.calls += 1
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
+async def test_rpc_post_retries_5xx_then_succeeds():
+    sess = _Session([_Resp(503, {}), _Resp(502, {}), _Resp(200, {"result": "ok"})])
+    out = await _rpc_post(sess, "http://x/rpc", {}, backoff=0)
+    assert out == {"result": "ok"}
+    assert sess.calls == 3  # two transient 5xx retried, third succeeds
+
+
+async def test_rpc_post_retries_refused_connection():
+    sess = _Session([aiohttp.ClientConnectionError("refused"), _Resp(200, {"result": 1})])
+    out = await _rpc_post(sess, "http://x/rpc", {}, backoff=0)
+    assert out == {"result": 1}
+    assert sess.calls == 2
+
+
+async def test_rpc_post_gives_up_after_max_retries():
+    sess = _Session([_Resp(503, {})] * 6)
+    with pytest.raises(ConnectionError):
+        await _rpc_post(sess, "http://x/rpc", {}, retries=2, backoff=0)
+    assert sess.calls == 3  # initial attempt + 2 retries, then it raises
+
+
+async def test_rpc_post_does_not_retry_a_real_answer():
+    sess = _Session([_Resp(200, {"error": {"code": -32601}})])
+    out = await _rpc_post(sess, "http://x/rpc", {}, backoff=0)
+    assert out["error"]["code"] == -32601  # a JSON-RPC error is a real reply, not a worker shortage
+    assert sess.calls == 1

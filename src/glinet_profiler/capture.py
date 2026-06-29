@@ -1,14 +1,55 @@
 """Server-side capture: enumerate a device read-only and return a sanitized profile."""
 
+import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from typing import Any
+
+import aiohttp
 
 from .enumerator.probe import device_id
 from .sanitize import project_report
 
 # Async progress sink: awaited with `{"event": "progress", "phase": ..., ...}` dicts.
 ProgressFn = Callable[[dict[str, Any]], Awaitable[None]]
+
+# A scan shares the router's tiny fcgiwrap RPC backend (4 workers) with whatever else is hitting
+# it — e.g. Home Assistant polling. When there's no free worker a probe gets a 5xx / refused
+# connection that isn't a real answer; retry those, backing off *inside* the concurrency slot so
+# the scan yields to the backend instead of piling on. A real JSON-RPC reply (any <500 body) is
+# never retried, and a timeout isn't either (that's a slow method, not a worker shortage).
+_MAX_PROBE_RETRIES = 3
+_RETRY_BACKOFF = 0.4  # seconds; exponential: 0.4, 0.8, 1.6
+
+
+async def _rpc_post(
+    session: aiohttp.ClientSession,
+    url: str,
+    payload: dict[str, Any],
+    *,
+    retries: int = _MAX_PROBE_RETRIES,
+    backoff: float = _RETRY_BACKOFF,
+) -> dict[str, Any]:
+    """POST a JSON-RPC call, retrying only transient backend saturation (5xx / connection refused).
+
+    Timeouts are deliberately not retried — those are a genuinely slow method, not a worker
+    shortage. Backing off here happens while holding the caller's concurrency slot, so a saturated
+    scan self-throttles instead of hammering the backend.
+    """
+    for attempt in range(retries + 1):
+        try:
+            async with session.post(
+                url, json=payload, timeout=aiohttp.ClientTimeout(total=12)
+            ) as resp:
+                if resp.status >= 500:
+                    raise ConnectionError(f"backend HTTP {resp.status}")
+                data: dict[str, Any] = await resp.json(content_type=None)
+                return data
+        except (aiohttp.ClientError, ConnectionError):
+            if attempt >= retries:
+                raise
+            await asyncio.sleep(backoff * 2**attempt)
+    raise ConnectionError("probe retries exhausted")  # unreachable: loop returns or raises
 
 
 async def _noop(_event: dict[str, Any]) -> None:
@@ -38,8 +79,6 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
     Read-only by default; ``dangerous`` calls write endpoints and ``include_destructive``
     calls destructive ones (see ``capture``).
     """
-    import aiohttp  # pylint: disable=import-outside-toplevel  # noqa: PLC0415  (local so tests can patch _enumerate)
-
     from .enumerator.probe import (
         enumerate_device,  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
     )
@@ -91,13 +130,10 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
             if args is not None:
                 params.append(args)
             payload = {"jsonrpc": "2.0", "id": 0, "method": "call", "params": params}
-            # Per-request cap: some methods make the router do a slow external lookup
-            # (e.g. wg-client.get_country_url) and otherwise hang forever — time out and move on
-            # (the enumerator's _probe catches it and records the method UNREACHABLE).
-            async with session.post(
-                rpc_url, json=payload, timeout=aiohttp.ClientTimeout(total=12)
-            ) as resp:
-                data: dict[str, Any] = await resp.json(content_type=None)
+            # _rpc_post applies a 12s per-request cap (some methods hang on a slow external lookup,
+            # e.g. wg-client.get_country_url) and retries transient worker-shortage failures; a
+            # timeout still propagates and the enumerator's _probe records the method UNREACHABLE.
+            data = await _rpc_post(session, rpc_url, payload)
             probed += 1
             await on_progress(
                 {
