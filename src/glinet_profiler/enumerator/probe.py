@@ -18,7 +18,9 @@ from .wordlist import (
 )
 
 _SLUG = re.compile(r"[^a-z0-9.]+")
-_CONCURRENCY = 3  # GL.iNet's RPC backend is fcgiwrap with only 4 CGI workers on my MT6000; stay under that
+_CONCURRENCY = (
+    3  # GL.iNet's RPC backend is fcgiwrap with only 4 CGI workers on my MT6000; stay under that
+)
 # so a few slow/hung methods can't starve the router's own UI (nginx fastcgi_read_timeout is 300s,
 # so a hung glc keeps a worker busy long after our client times out).
 
@@ -129,7 +131,9 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
             covered_by=covered_by(service, method),
         )
 
-    def _discovered(service: str, method: str, mrisk: Risk, params: list[str] | None) -> MethodReport:
+    def _discovered(
+        service: str, method: str, mrisk: Risk, params: list[str] | None
+    ) -> MethodReport:
         """Record an SSH-discovered method without any HTTP call (from the device's files)."""
         return MethodReport(
             service=service,

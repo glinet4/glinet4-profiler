@@ -63,7 +63,9 @@ def test_parse_validators_reads_compiled_bytecode():
     out = parse_validators({"wg-client": blob})
     assert "set_group" in out["wg-client"] and "add_config" in out["wg-client"]
     assert out["wg-client"]["set_group"] == []  # params unrecoverable from bytecode
-    assert "group_name" not in out["wg-client"] and "require" not in out["wg-client"]  # params/stdlib excluded
+    assert (
+        "group_name" not in out["wg-client"] and "require" not in out["wg-client"]
+    )  # params/stdlib excluded
 
 
 def test_merge_surface_drops_unverified_so_writes():
@@ -98,7 +100,9 @@ def test_parse_validators_preserves_underscore_service_name():
 
 def test_parse_fcgi_workers():
     # from `ps w` (running process) and from the init script — both carry `-c N`
-    assert parse_fcgi_workers("4325 root /usr/bin/fcgiwrap -c 4 -s unix:/var/run/fcgiwrap.socket") == 4
+    assert (
+        parse_fcgi_workers("4325 root /usr/bin/fcgiwrap -c 4 -s unix:/var/run/fcgiwrap.socket") == 4
+    )
     assert parse_fcgi_workers("    procd_set_param command $PROG -c 8 -s unix:...") == 8
     assert parse_fcgi_workers("no fcgiwrap here") is None
     assert parse_fcgi_workers("") is None
