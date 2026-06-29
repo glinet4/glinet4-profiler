@@ -38,3 +38,18 @@ def test_empty_list_and_top_level_scalar():
     assert signature_of({"items": []}) == {"items": []}
     assert signature_of("5g") == "5g"
     assert signature_of(42) == 42
+
+
+def test_personal_or_secret_key_holding_a_list_is_labeled():
+    # regression: the list branch must propagate the key, or a personal-keyed list of strings
+    # (e.g. DDNS hostnames) would be published verbatim — a real PII leak.
+    assert signature_of({"domain": ["host.example.com"]}) == {"domain": ["<string>"]}
+    assert signature_of({"ssid": ["MyHomeWifi"]}) == {"ssid": ["<string>"]}
+    assert signature_of({"psk": ["s3cr3t"]}) == {"psk": ["<secret>"]}
+
+
+def test_labels_ddns_and_unix_ts_and_ip_port():
+    assert signature_of({"ddns": "rh370e3"}) == {"ddns": "<string>"}  # DDNS subdomain is a locator
+    assert signature_of({"updated": "1780618374"}) == {"updated": "<datetime>"}  # unix ts string
+    # ip:port must not survive as an "enum" just because the colon used to be allowed
+    assert signature_of({"upstream": "192.168.8.1:8080"}) == {"upstream": "<string>"}
