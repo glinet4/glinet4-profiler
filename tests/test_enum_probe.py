@@ -25,7 +25,7 @@ async def test_enumerate_marks_available_absent_and_redacts():
     by = {(m.service, m.method): m for m in report.methods}
     assert by[("wg-server", "get_config")].status is ProbeStatus.AVAILABLE
     assert by[("wg-server", "get_config")].value == {"port": 51820, "private_key": "<redacted>"}
-    assert by[("wg-server", "get_config")].schema == {"port": "int", "private_key": "str"}
+    assert by[("wg-server", "get_config")].signature == {"port": 51820, "private_key": "<secret>"}
     # dangerous methods (e.g. system.reboot) must never be probed
     assert ("system", "reboot") not in by
 
@@ -55,7 +55,7 @@ async def test_coverage_annotation():
     assert info.covered_by == "router_info"
 
 
-async def test_unreachable_has_no_value_or_schema():
+async def test_unreachable_has_no_value_or_signature():
     async def caller(service, method, args):  # noqa: ARG001
         raise ConnectionError("boom")
 
@@ -63,7 +63,7 @@ async def test_unreachable_has_no_value_or_schema():
     assert report.methods, "should have attempted probes"
     for m in report.methods:
         assert m.status is ProbeStatus.UNREACHABLE
-        assert m.value is None and m.schema is None
+        assert m.value is None and m.signature is None
 
 
 def test_device_id_slug():

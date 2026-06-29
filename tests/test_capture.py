@@ -32,7 +32,7 @@ RAW = {
                 "discovered_by": "catalog",
                 "covered_by": "router_info",
                 "params": None,
-                "schema": {"model": "str"},
+                "signature": {"model": "mt6000"},
                 "value": {"mac": "94:83:C4:AA:BB:CC"},
             }
         }

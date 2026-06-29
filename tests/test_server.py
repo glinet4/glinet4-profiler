@@ -23,7 +23,7 @@ PROFILE = {
                 "discovered_by": "catalog",
                 "covered_by": "router_info",
                 "params": None,
-                "schema": {},
+                "signature": {},
             }
         }
     },

@@ -16,7 +16,7 @@ def _method_dict(m: MethodReport) -> dict[str, Any]:
         "risk": str(m.risk),
         "discovered_by": m.discovered_by,
         "params": m.params,
-        "schema": m.schema,
+        "signature": m.signature,
         "value": m.value,
         "covered_by": m.covered_by,
     }

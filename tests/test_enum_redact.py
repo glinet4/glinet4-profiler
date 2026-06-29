@@ -1,7 +1,7 @@
 """Unit tests for redaction and schema capture."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet_profiler.enumerator.redact import redact, schema_of
+from glinet_profiler.enumerator.redact import redact
 
 
 def test_redacts_secret_keys():
@@ -52,12 +52,3 @@ def test_does_not_mutate_input():
     src = {"key": "s3cret"}
     redact(src)
     assert src["key"] == "s3cret"
-
-
-def test_schema_of_types_only_no_values():
-    s = schema_of({"a": 1, "b": "x", "c": [{"d": True}], "e": None})
-    assert s == {"a": "int", "b": "str", "c": [{"d": "bool"}], "e": "NoneType"}
-
-
-def test_schema_depth_limit():
-    assert schema_of({"a": {"b": {"c": 1}}}, depth=1) == {"a": "dict"}

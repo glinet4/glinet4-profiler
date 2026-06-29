@@ -9,7 +9,8 @@ from .catalog import CATALOG, COMMON_READ_METHODS, DESTRUCTIVE_METHODS, is_read_
 from .classify import classify
 from .coverage import covered_by
 from .models import Caller, DeviceReport, MethodReport, ProbeStatus, Risk, SshSurface
-from .redact import redact, schema_of
+from .redact import redact
+from .signature import signature_of
 from .wordlist import (
     ACTIVE_READ_SEEDS,
     MUTATING_METHOD_SEEDS,
@@ -130,7 +131,7 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
             risk=mrisk,
             discovered_by=discovered_by,
             params=params,
-            schema=schema_of(value) if value is not None else None,
+            signature=signature_of(value) if value is not None else None,
             value=redact(value, enabled=redact_values) if value is not None else None,
             covered_by=covered_by(service, method),
         )
@@ -147,7 +148,7 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
             risk=mrisk,
             discovered_by="ssh",
             params=params,
-            schema=None,
+            signature=None,
             value=None,
             covered_by=covered_by(service, method),
         )

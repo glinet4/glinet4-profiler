@@ -62,16 +62,3 @@ def redact(value: object, *, enabled: bool = True, _key: str | None = None) -> o
     if enabled and isinstance(value, str):
         return _redact_str(value, _key)
     return value
-
-
-def schema_of(value: object, depth: int = 4) -> object:
-    """Return a type-name shape mirror of ``value`` (never raw values)."""
-    if isinstance(value, dict):
-        if depth <= 0:
-            return "dict"
-        return {k: schema_of(v, depth - 1) for k, v in value.items()}
-    if isinstance(value, list):
-        if depth <= 0 or not value:
-            return "list"
-        return [schema_of(value[0], depth - 1)]
-    return type(value).__name__

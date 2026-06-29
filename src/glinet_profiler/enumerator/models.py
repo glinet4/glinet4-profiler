@@ -51,7 +51,7 @@ class MethodReport:
     risk: Risk
     discovered_by: str
     params: list[str] | None
-    schema: object
+    signature: object
     value: object
     covered_by: str | None
 

@@ -29,7 +29,7 @@ RAW = {
                 "discovered_by": "catalog",
                 "covered_by": "router_info",
                 "params": None,
-                "schema": {"model": "str", "mac": "str"},
+                "signature": {"model": "mt6000", "mac": "<mac>"},
                 "value": {"mac": "94:83:C4:AA:BB:CC", "sn": "SECRET123"},
             },
         },
@@ -44,8 +44,9 @@ def test_keeps_allowlist_and_method_fields():
     assert out["vendor"] == "GL.iNet"
     m = out["services"]["system"]["get_info"]
     assert m["status"] == "available" and m["covered_by"] == "router_info"
-    # schema is kept intact (type-erased field-names, incl. "mac", are API docs)
-    assert m["schema"] == {"model": "str", "mac": "str"}
+    # signature is kept intact (formats + safe examples are the published API shape)
+    assert m["signature"] == {"model": "mt6000", "mac": "<mac>"}
+    assert "schema" not in m
 
 
 def test_keeps_non_identifying_capabilities():
