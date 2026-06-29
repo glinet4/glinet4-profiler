@@ -8,8 +8,10 @@ dist/
 build/
 *.egg-info/
 
-# Local secrets — router credentials. Never commit (.env.example is the safe template).
+# Local router-credential helpers — never commit. .env holds real secrets; .env.example is a
+# local scaffold (not a tool-read template — the CLI reads GLINET_PASSWORD / --password / a prompt).
 .env
+.env.example
 
 # Raw enumerator reports / captures may contain device identifiers (mac/sn) — never commit.
 reports/
