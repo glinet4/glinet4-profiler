@@ -2,27 +2,99 @@
 const token = new URLSearchParams(location.search).get("t") || "";
 const $ = (id) => document.getElementById(id);
 const PRESENT = new Set(["available", "needs_params"]);
+const WRITE_VERBS = new Set(["set", "add", "update", "create", "del", "delete", "remove", "clear"]);
 let profile = null;
 let submitUrl = "";
 
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+const SW_LABELS = {
+  adguard: "AdGuard Home", tor: "Tor", vpn: "VPN", obfuscation: "VPN obfuscation",
+  nas: "NAS / file sharing", ksmbd: "Samba (SMB)", sms_forward: "SMS forwarding",
+  bark: "Bark notifications", ipv6: "IPv6", mlo: "MLO (Wi-Fi 7)", vlan: "VLAN",
+  ids_ips: "IDS / IPS", secondwan: "Dual WAN / failover", repeater_eap: "Repeater (WPA-Ent)",
+  passthrough: "Modem passthrough",
+};
+const cap = (p) => p.capabilities || {};
+const hw = (p) => cap(p).hardware_feature || {};
+const sw = (p) => cap(p).software_feature || {};
+const truthy = (v) => v === true || (typeof v === "string" && v !== "" && v !== "0" && v !== "false");
+const HW = [
+  { label: "Cellular modem", fn: (p) => truthy(hw(p).simo) || truthy(hw(p).build_in_modem) },
+  { label: "Bluetooth", fn: (p) => truthy(hw(p).bluetooth) },
+  { label: "GPS", fn: (p) => truthy(hw(p).gps) },
+  { label: "USB 3.0", fn: (p) => truthy(hw(p).usb3) },
+  { label: "Screen", fn: (p) => truthy(hw(p).screen) },
+  { label: "microSD", fn: (p) => truthy(hw(p).microsd) },
+  { label: "NAND flash", fn: (p) => truthy(hw(p).nand) },
+];
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+  ));
+}
 function badge(t, c) { return `<span class="badge ${escapeHtml(c)}">${escapeHtml(t)}</span>`; }
+function block(label, body, req) {
+  return `<div class="detail-block"><div class="detail-label${req ? " req" : ""}">${escapeHtml(label)}</div>` +
+    `<pre>${escapeHtml(body)}</pre></div>`;
+}
+
+function pairedRead(p, service, method) {
+  const us = method.indexOf("_");
+  if (us < 0) return null;
+  const verb = method.slice(0, us), noun = method.slice(us + 1);
+  if (!WRITE_VERBS.has(verb) || !noun) return null;
+  const methods = p.services[service] || {};
+  for (const cand of [`get_${noun}`, `get_${noun}_list`, `get_${noun}_config`, `get_${noun}_info`]) {
+    const r = methods[cand];
+    if (r && r.signature && typeof r.signature === "object" && !Array.isArray(r.signature)) {
+      return { from: `${service}.${cand}`, shape: r.signature };
+    }
+  }
+  return null;
+}
+
+function renderCaps(p) {
+  const c = cap(p);
+  if (!c.country_code && !c.software_feature && !c.hardware_feature) return "";
+  const onSw = Object.entries(SW_LABELS).filter(([k]) => sw(p)[k] === true).map(([, l]) => l);
+  const onHw = HW.filter((h) => h.fn(p)).map((h) => h.label);
+  const region = c.country_code
+    ? `<div class="caps-region">Regulatory region <b>${escapeHtml(c.country_code)}</b></div>` : "";
+  const chips = [...onSw, ...onHw].map((f) => `<span class="flag">${escapeHtml(f)}</span>`).join("");
+  if (!region && !chips) return "";
+  return `<div class="caps">${region}<div class="caps-flags">${chips}</div></div>`;
+}
+
+function methodRow(service, method, rec) {
+  const present = PRESENT.has(rec.status);
+  let cov = "";
+  if (rec.covered_by) cov = badge(`gli4py: ${rec.covered_by}`, "cov-yes");
+  else if (present) cov = badge("not in gli4py", "cov-no");
+  const parts = [];
+  if (rec.signature != null) parts.push(block("Response signature", JSON.stringify(rec.signature, null, 2)));
+  const inferred = rec.risk === "write" && !(rec.params && rec.params.length)
+    ? pairedRead(profile, service, method) : null;
+  if (inferred) parts.push(block(`Request shape · inferred from ${inferred.from}`, JSON.stringify(inferred.shape, null, 2), true));
+  else if (rec.params && rec.params.length) parts.push(block("Params", JSON.stringify(rec.params, null, 2), true));
+  const detail = parts.length ? `<div class="detail">${parts.join("")}</div>` : "";
+  return `<div class="method">
+    <div class="mhead">
+      <span class="mname">${escapeHtml(method)}</span>
+      ${badge(rec.status, "st-" + rec.status)}
+      ${badge(rec.risk, "rk-" + rec.risk)}
+      <span class="spacer"></span>${cov}
+    </div>${detail}</div>`;
+}
 
 function renderProfile(p) {
-  const parts = [];
+  const services = [];
   for (const service of Object.keys(p.services).sort()) {
     const methods = p.services[service];
-    const rows = [];
-    for (const m of Object.keys(methods).sort()) {
-      const rec = methods[m];
-      let cov = "";
-      if (rec.covered_by) cov = badge(`gli4py: ${rec.covered_by}`, "cov-yes");
-      else if (PRESENT.has(rec.status)) cov = badge("not yet in gli4py", "cov-no");
-      rows.push(`<div class="method"><code>${escapeHtml(m)}</code>${badge(rec.status, "st-" + rec.status)}${badge(rec.risk, "rk-" + rec.risk)}${cov}</div>`);
-    }
-    parts.push(`<section class="service"><h3>${escapeHtml(service)}</h3>${rows.join("")}</section>`);
+    const rows = Object.keys(methods).sort().map((m) => methodRow(service, m, methods[m]));
+    services.push(`<section class="service"><h3>${escapeHtml(service)}` +
+      `<span class="svc-count">${rows.length}</span></h3>${rows.join("")}</section>`);
   }
-  return parts.join("");
+  return renderCaps(p) + `<div class="results">${services.join("")}</div>`;
 }
 
 function setProgress(message, done) {
@@ -83,10 +155,10 @@ async function onCapture(e) {
     }
     showProgress(false);
     if (errorMsg) { $("result").innerHTML = `<p class="error">${escapeHtml(errorMsg)}</p>`; return; }
-    if (!result) { $("result").innerHTML = "<p class='error'>No result received.</p>"; return; }
+    if (!result) { $("result").innerHTML = '<p class="error">No result received.</p>'; return; }
     profile = result.profile; submitUrl = result.submit_url || "";
     if (result.registry_reachable === false) {
-      $("banner").innerHTML = `<div class="new">⚠️ Couldn't reach the registry — submit anyway; the bot will dedup.</div>`;
+      $("banner").innerHTML = '<div class="new">⚠️ Couldn\'t reach the registry — submit anyway; the bot will dedup.</div>';
     } else {
       $("banner").innerHTML = result.lookup
         ? `<div class="known">✅ <b>${escapeHtml(profile.model)}</b> (${escapeHtml(profile.firmware_version)}) is already in the registry.</div>`
@@ -107,12 +179,15 @@ function onDownload() {
   a.href = URL.createObjectURL(blob); a.download = `${profile.id}.json`; a.click();
   URL.revokeObjectURL(a.href);
 }
-
 function onSubmit() { if (submitUrl) window.open(submitUrl, "_blank", "noopener"); }
 
 $("form").addEventListener("submit", onCapture);
 $("download").addEventListener("click", onDownload);
 $("submit").addEventListener("click", onSubmit);
+$("result").addEventListener("click", (e) => {
+  const m = e.target.closest(".method");
+  if (m) m.classList.toggle("open");
+});
 // destructive probing only unlocks once write-probing is enabled
 $("dangerous").addEventListener("change", () => {
   $("destructive").disabled = !$("dangerous").checked;

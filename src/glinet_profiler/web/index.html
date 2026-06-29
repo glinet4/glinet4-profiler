@@ -7,32 +7,72 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header>
-    <h1>glinet-profiler</h1>
-    <p class="sub">Capture your GL.iNet device's API surface — read-only, your password stays on this machine.</p>
+  <header class="topbar">
+    <span class="brand">
+      <span class="brand-mark">◊</span>
+      <span class="brand-name">glinet-<span class="brand-accent">profiler</span></span>
+    </span>
+    <span class="local-chip"><span class="dot"></span> local · read-only · password never leaves this machine</span>
   </header>
-  <form id="form">
-    <label>Router IP <input id="host" type="text" value="192.168.8.1" required></label>
-    <label>Username <input id="username" type="text" value="root"></label>
-    <label>Password <input id="password" type="password" required></label>
-    <label class="chk"><input id="ssh" type="checkbox" checked> try SSH ground-truth (default; falls back automatically)</label>
-    <label class="chk danger"><input id="dangerous" type="checkbox"> ⚠ probe write endpoints — <b>changes your router's config</b> (spare routers only)</label>
-    <label class="chk danger"><input id="destructive" type="checkbox" disabled> ☢ also probe destructive: reboot / factory-reset / firmware (<b>sacrificial routers only</b>)</label>
-    <button type="submit">Capture</button>
-  </form>
-  <div id="progress" class="progress" hidden>
-    <span class="spinner"></span>
-    <span id="progress-msg"></span>
-    <span id="progress-count" class="count"></span>
-  </div>
-  <p id="status" class="status"></p>
-  <div id="banner"></div>
-  <div id="actions" hidden>
-    <button id="download">Download profile</button>
-    <button id="submit">Submit to registry</button>
-  </div>
-  <main id="result"></main>
-  <footer><p>Read-only. No identifiers or response values are included in the profile. Nothing is uploaded unless you click Submit.</p></footer>
+
+  <main>
+    <section class="intro">
+      <h1>Profile your GL.iNet router</h1>
+      <p class="intro-lede">
+        Capture the device's JSON-RPC API surface — methods, response <strong>signatures</strong>, and
+        the request shape for writes. Reads only by default; your password is used locally to log in and
+        is never stored or uploaded.
+      </p>
+    </section>
+
+    <form id="form" class="panel capture-card">
+      <div class="field-row">
+        <label class="field">Router IP / host
+          <input id="host" type="text" value="192.168.8.1" required autocomplete="off" spellcheck="false">
+        </label>
+        <label class="field">Username
+          <input id="username" type="text" value="root" autocomplete="off" spellcheck="false">
+        </label>
+        <label class="field">Password
+          <input id="password" type="password" required autocomplete="off">
+        </label>
+      </div>
+
+      <label class="toggle">
+        <input id="ssh" type="checkbox" checked>
+        <span><b>SSH ground-truth discovery</b> — reads the device's own handler files for a fuller map (falls back automatically)</span>
+      </label>
+      <label class="toggle danger">
+        <input id="dangerous" type="checkbox">
+        <span><b>⚠ Probe write endpoints</b> — actually calls <code>set_/add_</code> methods, <b>changing your router's config</b>. Spare routers only.</span>
+      </label>
+      <label class="toggle danger">
+        <input id="destructive" type="checkbox" disabled>
+        <span><b>☢ Also probe destructive</b> — reboot / factory-reset / firmware, run last. <b>Sacrificial routers only.</b></span>
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-lg">Capture API surface</button>
+    </form>
+
+    <div id="progress" class="progress" hidden>
+      <span class="spinner"></span>
+      <span id="progress-msg" class="progress-msg"></span>
+      <span id="progress-count" class="count"></span>
+    </div>
+    <p id="status" class="status"></p>
+    <div id="banner"></div>
+
+    <div id="actions" class="actions" hidden>
+      <button id="download" class="btn btn-ghost">⬇ Download profile</button>
+      <button id="submit" class="btn btn-ghost">Submit to registry ↗</button>
+    </div>
+
+    <div id="result"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p>Read-only by default. No identifiers (MAC / serial) or raw response values are included in the profile — only the API shape. Nothing is uploaded unless you click Submit.</p>
+  </footer>
   <script src="app.js"></script>
 </body>
 </html>
