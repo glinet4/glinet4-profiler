@@ -36,7 +36,8 @@ _MAC_VALUE = re.compile(
 )  # device identifier; scrub anywhere
 
 
-def _key_is_secret(key: str) -> bool:
+def key_is_secret(key: str) -> bool:
+    """Return True if *key* names a secret field (password, token, cert, …)."""
     low = key.lower()
     for tok in _SECRET_TOKENS:
         if low == tok or low.endswith("_" + tok) or low.startswith(tok + "_"):
@@ -45,7 +46,7 @@ def _key_is_secret(key: str) -> bool:
 
 
 def _redact_str(value: str, key: str | None) -> str:
-    if key is not None and _key_is_secret(key):
+    if key is not None and key_is_secret(key):
         return REDACTED
     if len(value) >= 64 and _OPAQUE.match(value):
         return REDACTED
