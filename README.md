@@ -40,11 +40,29 @@ password, and click **Capture**. You'll get a sanitized profile, a
 
 ## What's in the profile (and what isn't)
 
-The published profile keeps only the device **model + firmware** and the
-**per-method API shape** (status, risk, whether the [gli4py](https://github.com/shauneccles/gli4py)
-client wraps it, params, schema). It **drops** device identifiers (`mac`, `sn`,
-`sn_bak`) and **all response values** — the raw report never leaves the local
-`capture()` step.
+The published profile keeps the device **model + firmware**, non-identifying
+**capability flags** (regulatory region + the software/hardware feature map), and
+the **per-method API shape**: status, risk, [gli4py](https://github.com/shauneccles/gli4py)
+coverage, params, and a response **signature**.
+
+The **signature** is distilled from a real response — on your machine, before
+anything is written. Field **structure** and *safe* example values (numbers,
+booleans, and short enum-like strings such as `"5g"` / `"ap"`) are kept because
+they're the API contract; **anything that could identify you or your network is
+replaced with a format label, never a real value**:
+
+| kept verbatim | replaced with a format label |
+| --- | --- |
+| numbers, booleans, enums (`"5g"`) | MAC → `<mac>` · IPv4 / IPv6 → `<ipv4>` / `<ipv6>` |
+| field names + nesting | timestamps → `<datetime>` |
+| | passwords / keys / tokens / serials → `<secret>` |
+| | SSIDs / hostnames / domains / free text → `<string>` |
+
+**Dropped entirely:** device identifiers (`mac`, `sn`, `sn_bak`), credentials, and
+every raw response body. Your real IPs, hostnames, SSIDs, MACs, and secrets are
+**never published — only their format.** (`--keep-data` keeps the redacted values
+*locally* for your own analysis; that output is not registry-publishable, and the
+registry's validator independently rejects any MAC, serial, or raw value.)
 
 Enumeration is strictly **read-only** (a built-in catalog tier, plus an optional
 SSH read tier if you tick the box and have SSH access).
