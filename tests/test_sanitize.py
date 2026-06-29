@@ -17,6 +17,8 @@ RAW = {
         "sn": "SECRET123",
         "sn_bak": "SECRET456",
         "country_code": "US",
+        "software_feature": {"adguard": True, "vpn": True, "cellular_ref": "1.0"},
+        "hardware_feature": {"usb3": "2-1", "simo": False},
     },
     "services": {
         "system": {
@@ -46,10 +48,19 @@ def test_keeps_allowlist_and_method_fields():
     assert m["schema"] == {"model": "str", "mac": "str"}
 
 
+def test_keeps_non_identifying_capabilities():
+    out = project_report(RAW, "mt6000_4.9.0")
+    caps = out["capabilities"]
+    assert caps["country_code"] == "US"
+    assert caps["software_feature"]["vpn"] is True
+    assert caps["hardware_feature"]["simo"] is False  # explains why modem.* would error
+
+
 def test_drops_identifiers_and_values():
     out = project_report(RAW, "mt6000_4.9.0")
-    for k in ("mac", "sn", "sn_bak", "country_code"):
+    for k in ("mac", "sn", "sn_bak"):  # identifiers dropped from the top level
         assert k not in out
+    assert "capabilities" in out  # ...but the non-identifying capability block is kept
     # method-level response value is dropped
     assert "value" not in out["services"]["system"]["get_info"]
     # no actual identifier VALUE survives (the real MAC / serials)
