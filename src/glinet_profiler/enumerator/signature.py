@@ -14,6 +14,7 @@ from .redact import key_is_secret  # shared secret-key matcher (renamed export, 
 _MAC = re.compile(r"^(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")
 _IPV4 = re.compile(r"^(?:\d{1,3}\.){3}\d{1,3}$")
 _HEXCOLON = re.compile(r"^[0-9A-Fa-f:]+$")
+_TIME = re.compile(r"^\d{1,2}:\d{2}(:\d{2})?$")  # HH:MM(:SS) time-of-day, checked before IPv6
 _DATETIME = re.compile(r"^\d{4}-\d{2}-\d{2}")  # ISO-8601 date or datetime
 # No ':' in the enum charset — colon-bearing tokens (ip:port, "08:30:00") fall through to <string>
 # rather than being kept as an "enum".
@@ -55,6 +56,8 @@ def _label_str(value: str, key: str | None) -> str:  # pylint: disable=too-many-
         return "<mac>"
     if _IPV4.match(value):
         return "<ipv4>"
+    if _TIME.match(value):
+        return "<datetime>"  # HH:MM(:SS) is a time-of-day, not an IPv6 address
     if value.count(":") >= 2 and _HEXCOLON.match(value):
         return "<ipv6>"
     if _DATETIME.match(value) or (value.isdigit() and len(value) in (10, 13)):

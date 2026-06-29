@@ -53,3 +53,11 @@ def test_labels_ddns_and_unix_ts_and_ip_port():
     assert signature_of({"updated": "1780618374"}) == {"updated": "<datetime>"}  # unix ts string
     # ip:port must not survive as an "enum" just because the colon used to be allowed
     assert signature_of({"upstream": "192.168.8.1:8080"}) == {"upstream": "<string>"}
+
+
+def test_time_of_day_is_datetime_not_ipv6():
+    # a HH:MM(:SS) schedule time was being mislabeled <ipv6> (harmless but wrong)
+    assert signature_of({"reboot_at": "08:30:00"}) == {"reboot_at": "<datetime>"}
+    assert signature_of({"t": "8:30"}) == {"t": "<datetime>"}
+    # a genuine IPv6 (hex / ::) is still labeled correctly
+    assert signature_of({"v6": "fe80::1"}) == {"v6": "<ipv6>"}
