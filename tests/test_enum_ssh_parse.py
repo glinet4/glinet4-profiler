@@ -4,6 +4,7 @@
 from glinet_profiler.enumerator.ssh import (
     merge_surface,
     parse_account_acl,
+    parse_fcgi_workers,
     parse_handlers,
     parse_validators,
 )
@@ -93,6 +94,14 @@ def test_parse_validators_preserves_underscore_service_name():
     assert "flow_statistics" in out
     assert "flow-statistics" not in out
     assert out["flow_statistics"]["get_statistics_rule"] == ["period"]
+
+
+def test_parse_fcgi_workers():
+    # from `ps w` (running process) and from the init script — both carry `-c N`
+    assert parse_fcgi_workers("4325 root /usr/bin/fcgiwrap -c 4 -s unix:/var/run/fcgiwrap.socket") == 4
+    assert parse_fcgi_workers("    procd_set_param command $PROG -c 8 -s unix:...") == 8
+    assert parse_fcgi_workers("no fcgiwrap here") is None
+    assert parse_fcgi_workers("") is None
 
 
 def test_parse_account_acl_root_full():

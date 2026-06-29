@@ -75,6 +75,7 @@ class SshSurface:
     features: list[str] = field(default_factory=list)
     ubus: list[str] = field(default_factory=list)
     no_auth: dict[str, list[str]] = field(default_factory=dict)
+    rpc_workers: int | None = None  # fcgiwrap CGI worker count (the RPC backend's concurrency ceiling)
 
 
 Caller = Callable[[str, str, "dict[str, Any] | None"], Awaitable["dict[str, Any]"]]

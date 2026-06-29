@@ -118,6 +118,15 @@ def merge_surface(
     return handlers
 
 
+_FCGI_WORKERS = re.compile(r"-c +(\d+)")
+
+
+def parse_fcgi_workers(text: str) -> int | None:
+    """Parse the fcgiwrap worker count (the RPC backend's concurrency ceiling) from recon text."""
+    match = _FCGI_WORKERS.search(text)
+    return int(match.group(1)) if match else None
+
+
 def parse_account_acl(rows: list[tuple[str, str]]) -> tuple[list[dict[str, str]], bool]:
     """Accounts + whether a root-acl account exists (=> full access)."""
     accounts = [{"username": u, "acl": a} for u, a in rows]
@@ -130,6 +139,7 @@ echo '@@HANDLERS@@'; ls -1 /usr/lib/oui-httpd/rpc/ 2>/dev/null
 echo '@@UBUS@@'; ubus list 2>/dev/null
 echo '@@ACCOUNTS@@'; sqlite3 /etc/oui/oui.db 'SELECT username||"|"||acl FROM account;' 2>/dev/null
 echo '@@FEATURES@@'; ls -1 /usr/share/oui/menu.d/ 2>/dev/null | sed 's/.json$//'
+echo '@@FCGI@@'; ps w 2>/dev/null | grep '[f]cgiwrap'; grep -hoE -- '-c +[0-9]+' /etc/init.d/fcgiwrap 2>/dev/null
 echo '@@END@@'
 """
 
@@ -220,6 +230,7 @@ async def ssh_discover(  # pylint: disable=too-many-arguments,too-many-locals
         accounts=accounts,
         features=_section(recon, "FEATURES"),
         ubus=_section(recon, "UBUS"),
+        rpc_workers=parse_fcgi_workers("\n".join(_section(recon, "FCGI"))),
     )
 
 
@@ -227,6 +238,7 @@ __all__ = [
     "parse_handlers",
     "parse_validators",
     "merge_surface",
+    "parse_fcgi_workers",
     "parse_account_acl",
     "is_read_method",
     "SshUnavailable",

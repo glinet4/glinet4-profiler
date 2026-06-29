@@ -89,6 +89,7 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
     brute: str = "off",
     include_destructive: bool = False,
     probe_writes: bool = False,
+    concurrency: int | None = None,
     ssh_surface: SshSurface | None = None,
 ) -> DeviceReport:
     """Probe the read-only catalog surface and assemble a DeviceReport.
@@ -97,11 +98,13 @@ async def enumerate_device(  # pylint: disable=too-many-arguments,too-many-local
     ``probe_writes`` additionally calls WRITE-risk methods (changes config — spare routers);
     ``probe_writes`` + ``include_destructive`` also calls DESTRUCTIVE methods (reboot/reset/
     upgrade), deferred to the very end so they don't abort the rest of the scan.
+    ``concurrency`` bounds in-flight probes (default ``_CONCURRENCY``); the caller can pass a
+    value derived from the device's fcgiwrap worker count.
     """
     if brute not in {"off", "dangerous", "dangerous_full"}:
         raise ValueError(f"brute must be 'off', 'dangerous', or 'dangerous_full'; got {brute!r}")
 
-    sem = asyncio.Semaphore(_CONCURRENCY)
+    sem = asyncio.Semaphore(concurrency or _CONCURRENCY)
 
     async def _report(
         service: str,

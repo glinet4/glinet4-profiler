@@ -1,6 +1,8 @@
 """enumerate_device merges an injected SshSurface (no paramiko needed)."""
 # pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument
 
+import asyncio
+
 from glinet_profiler.enumerator.models import ProbeStatus, SshSurface
 from glinet_profiler.enumerator.probe import enumerate_device
 
@@ -81,3 +83,21 @@ async def test_ssh_include_destructive_probes_reboot_last():
     assert by["reboot"].status is ProbeStatus.AVAILABLE  # destructive: HTTP-called
     assert ("acl", "reboot") in called
     assert called[-1] == ("acl", "reboot")  # destructive runs dead last
+
+
+async def test_enumerate_respects_concurrency_limit():
+    in_flight = 0
+    max_seen = 0
+
+    async def caller(service, method, args):  # noqa: ARG001
+        nonlocal in_flight, max_seen
+        in_flight += 1
+        max_seen = max(max_seen, in_flight)
+        await asyncio.sleep(0.002)
+        in_flight -= 1
+        return {"error": {"code": -32601}}  # absent — fast, no value to redact
+
+    await enumerate_device(
+        caller, device_info={"model": "x", "firmware_version": "1"}, concurrency=2
+    )
+    assert max_seen == 2  # the semaphore held in-flight probes to exactly the limit

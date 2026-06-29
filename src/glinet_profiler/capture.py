@@ -125,12 +125,27 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
             if include_destructive:
                 note += " DESTRUCTIVE methods (reboot/reset/upgrade) will be called LAST."
             await on_progress({"event": "progress", "phase": "warn", "message": note})
+        # Auto-tune concurrency to the router's RPC backend: stay one under its fcgiwrap
+        # worker count so a busy scan can't starve the router's own UI. Falls back to the
+        # built-in default when SSH didn't run or the worker count couldn't be read.
+        concurrency: int | None = None
+        if surface is not None and surface.rpc_workers:
+            concurrency = max(1, min(16, surface.rpc_workers - 1))
+            await on_progress(
+                {
+                    "event": "progress",
+                    "phase": "probe",
+                    "message": f"RPC backend has {surface.rpc_workers} workers — "
+                    f"probing at concurrency {concurrency}.",
+                }
+            )
         report = await enumerate_device(
             caller,
             device_info=device_info,
             ssh_surface=surface,
             probe_writes=dangerous,
             include_destructive=include_destructive,
+            concurrency=concurrency,
         )
         raw: dict[str, Any] = json.loads(to_json(report))
         return raw
