@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/glinet4/branding/main/assets/dark_logo.png">
+    <img alt="glinet4" src="https://raw.githubusercontent.com/glinet4/branding/main/assets/logo.png" width="300">
+  </picture>
+</p>
+
 # glinet4-profiler
 
 [![PyPI](https://img.shields.io/pypi/v/glinet4-profiler)](https://pypi.org/project/glinet4-profiler/)
