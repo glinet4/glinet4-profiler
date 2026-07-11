@@ -1,7 +1,7 @@
 """Unit tests for redaction and schema capture."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet_profiler.enumerator.redact import redact
+from glinet4_profiler.enumerator.redact import redact
 
 
 def test_redacts_secret_keys():

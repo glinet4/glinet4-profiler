@@ -6,8 +6,8 @@ import json
 import aiohttp
 import pytest
 
-import glinet_profiler.capture as capture_mod
-from glinet_profiler.capture import _base_url, _rpc_post, capture
+import glinet4_profiler.capture as capture_mod
+from glinet4_profiler.capture import _base_url, _rpc_post, capture
 
 
 def test_base_url_normalizes_bare_ip():

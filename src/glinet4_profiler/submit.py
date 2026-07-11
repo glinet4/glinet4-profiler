@@ -4,7 +4,7 @@ import urllib.parse
 from typing import Any
 
 # GitHub repo that receives profile submissions.
-REGISTRY_REPO = "shauneccles/glinet-registry"
+REGISTRY_REPO = "glinet4/glinet4-registry"
 
 
 def prefilled_issue_url(profile: dict[str, Any]) -> str:

@@ -525,8 +525,8 @@ wheels = [
 ]
 
 [[package]]
-name = "glinet-profiler"
-version = "0.2.0"
+name = "glinet4-profiler"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

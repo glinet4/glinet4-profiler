@@ -3,7 +3,7 @@
 
 import pytest
 
-from glinet_profiler.glinet_login import compute_hash, login
+from glinet4_profiler.glinet_login import compute_hash, login
 
 
 def test_compute_hash_deterministic_md5():

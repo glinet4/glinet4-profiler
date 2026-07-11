@@ -3,8 +3,8 @@
 
 import asyncio
 
-from glinet_profiler.enumerator.models import ProbeStatus, SshSurface
-from glinet_profiler.enumerator.probe import enumerate_device
+from glinet4_profiler.enumerator.models import ProbeStatus, SshSurface
+from glinet4_profiler.enumerator.probe import enumerate_device
 
 
 async def test_ssh_surface_adds_confirmed_methods_with_params():

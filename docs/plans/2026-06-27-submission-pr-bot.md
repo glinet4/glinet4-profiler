@@ -258,7 +258,7 @@ import urllib.parse
 from typing import Any
 
 # The registry repo that receives profile submissions (update on extraction).
-REGISTRY_REPO = "shauneccles/glinet-profiler"
+REGISTRY_REPO = "glinet4/glinet4-profiler"
 
 
 def prefilled_issue_url(profile: dict[str, Any], *, repo: str = REGISTRY_REPO) -> str:

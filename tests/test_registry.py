@@ -1,7 +1,7 @@
 """Registry fetch-client tests."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet_profiler.registry import lookup
+from glinet4_profiler.registry import lookup
 
 MAN = {"devices": [{"id": "mt6000_4.9.0", "model": "mt6000", "firmware_version": "4.9.0"}]}
 

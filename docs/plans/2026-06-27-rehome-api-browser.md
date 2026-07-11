@@ -530,7 +530,7 @@ jobs:
 Run: `uv run python -c "import yaml; yaml.safe_load(open('.github/workflows/pages.yml')); print('ok')"`
 Expected: `ok`. (If PyYAML isn't in the env, `uv run --with pyyaml python -c "..."`.)
 
-> The workflow publishes only the assembled `_site` (the static browser + a copy of the canonical `src/glinet_profiler/data/`). It does not run the manifest builder — `index.json` is committed pre-built. Enable Pages once with source = "GitHub Actions" (`gh api -X POST repos/shauneccles/glinet-profiler/pages -f build_type=workflow`, or Settings → Pages). The existing `ci.yml` is untouched.
+> The workflow publishes only the assembled `_site` (the static browser + a copy of the canonical `src/glinet_profiler/data/`). It does not run the manifest builder — `index.json` is committed pre-built. Enable Pages once with source = "GitHub Actions" (`gh api -X POST repos/glinet4/glinet4-profiler/pages -f build_type=workflow`, or Settings → Pages). The existing `ci.yml` is untouched.
 
 - [ ] **Step 3: Commit**
 

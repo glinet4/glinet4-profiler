@@ -1,7 +1,7 @@
 """CLI tests for glinet-profiler (capture mode + server-mode dispatch)."""
 # pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument
 
-import glinet_profiler.cli as cli_mod
+import glinet4_profiler.cli as cli_mod
 
 PROFILE = {
     "id": "zz1300_9.9.9",

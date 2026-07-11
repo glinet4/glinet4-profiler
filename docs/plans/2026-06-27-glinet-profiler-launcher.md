@@ -225,7 +225,7 @@ git commit -m "feat(profiler): scaffold glinet-profiler package + sanitizer"
 - Produces:
   - `load_manifest() -> dict` (reads bundled `data/index.json`).
   - `lookup(model: str, firmware: str, manifest: dict | None = None) -> dict | None`.
-  - `prefilled_issue_url(profile: dict, *, repo: str = "shauneccles/glinet-profiler") -> str`.
+  - `prefilled_issue_url(profile: dict, *, repo: str = "glinet4/glinet4-profiler") -> str`.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -336,7 +336,7 @@ import urllib.parse
 from typing import Any
 
 # The registry repo that receives profile submissions (update on extraction).
-REGISTRY_REPO = "shauneccles/glinet-profiler"
+REGISTRY_REPO = "glinet4/glinet4-profiler"
 _PRESENT = ("available", "needs_params")
 
 

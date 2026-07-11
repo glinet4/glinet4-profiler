@@ -31,13 +31,13 @@ README.md, LICENSE (GPL-3.0), .gitignore
 ```
 
 - **Self-contained tooling (the sub-decision, approved):** `tools/registry_lib.py` ports `device_id` (the slug), `validate_profile`, and `build_manifest` as ~60 lines of stdlib — the registry repo has **no dependency on the `glinet-profiler` package** (no PyPI chicken-and-egg; data maintenance never needs the launcher). The launcher and the registry repo share only the *profile JSON contract*, not code.
-- **Pages** serves `site/` + `registry/` copied to `data/` → `https://shauneccles.github.io/glinet-registry/data/index.json` is the live manifest URL.
+- **Pages** serves `site/` + `registry/` copied to `data/` → `https://glinet4.github.io/glinet4-registry/data/index.json` is the live manifest URL.
 - **CI** keeps the committed `index.json` honest (rebuild-and-diff) and rejects any device file that fails `validate_profile` (identifiers/values/MAC) — a server-side publish-safety gate on contributions.
 
 ## `glinet-profiler` changes (becomes pure code)
 
 - **`registry.py` → a fetch client:**
-  - `DEFAULT_REGISTRY_URL = "https://shauneccles.github.io/glinet-registry/data/index.json"`.
+  - `DEFAULT_REGISTRY_URL = "https://glinet4.github.io/glinet4-registry/data/index.json"`.
   - `async fetch_manifest(url=DEFAULT_REGISTRY_URL, *, timeout=5.0) -> dict | None` — aiohttp GET; returns `None` on any failure (non-200, `ClientError`, timeout, bad JSON).
   - `lookup(model, firmware, manifest) -> dict | None` — match against the passed manifest; `manifest is None` → `None`.
   - **Removed:** `load_manifest`, `build_manifest`, `rebuild` (registry-maintenance, now in the registry repo).
@@ -46,7 +46,7 @@ README.md, LICENSE (GPL-3.0), .gitignore
   - reachable + match → "already in the registry";
   - reachable + no match → "NEW — contribute it" + the submit link.
 - **`--registry-url` returns** (default `DEFAULT_REGISTRY_URL`, override for testing) — threaded `cli → serve → make_app`.
-- **`submit.py`** → `REGISTRY_REPO = "shauneccles/glinet-registry"`.
+- **`submit.py`** → `REGISTRY_REPO = "glinet4/glinet4-registry"`.
 - **Removed from the package:** `src/glinet_profiler/data/`, `site/`, `scripts/{build_registry,ingest_submission}.py`, `src/glinet_profiler/ingest.py`, `.github/ISSUE_TEMPLATE/profile-submission.yml`, `.github/workflows/{submit-profile,pages}.yml`, and their tests (`test_site_static`, `test_ingest_submission`, the build/rebuild tests in `test_registry`). The wheel no longer ships any registry data. **Kept:** `src/glinet_profiler/web/` (the *launcher* UI), `sanitize.py`, `enumerator/`, `glinet_login.py`.
 - **Tests** mock `fetch_manifest` (no network in CI): a reachable manifest → known/new; `None` → degraded. capture/cli tests updated for the manifest arg + `registry_reachable`.
 

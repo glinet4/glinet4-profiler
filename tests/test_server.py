@@ -5,9 +5,9 @@ import json
 
 import pytest
 
-import glinet_profiler.capture as capture_mod
-import glinet_profiler.registry as registry_mod
-from glinet_profiler.server import make_app
+import glinet4_profiler.capture as capture_mod
+import glinet4_profiler.registry as registry_mod
+from glinet4_profiler.server import make_app
 
 TOKEN = "test-token"
 PROFILE = {
@@ -86,7 +86,7 @@ async def test_index_is_served(client):
 
 
 def test_open_browser_skips_under_wsl(monkeypatch):
-    import glinet_profiler.server as srv  # pylint: disable=import-outside-toplevel
+    import glinet4_profiler.server as srv  # pylint: disable=import-outside-toplevel
 
     monkeypatch.setattr(srv, "_is_wsl", lambda: True)
     calls = []

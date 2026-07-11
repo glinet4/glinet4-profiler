@@ -4,7 +4,7 @@
 import json
 import re
 
-from glinet_profiler.sanitize import project_report
+from glinet4_profiler.sanitize import project_report
 
 RAW = {
     "device": {

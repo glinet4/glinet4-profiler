@@ -3,9 +3,9 @@
 
 import pytest
 
-from glinet_profiler.enumerator.catalog import DESTRUCTIVE_METHODS, is_read_method
-from glinet_profiler.enumerator.models import ProbeStatus
-from glinet_profiler.enumerator.probe import brute_plan, enumerate_device
+from glinet4_profiler.enumerator.catalog import DESTRUCTIVE_METHODS, is_read_method
+from glinet4_profiler.enumerator.models import ProbeStatus
+from glinet4_profiler.enumerator.probe import brute_plan, enumerate_device
 
 
 def test_dangerous_plan_is_read_only():

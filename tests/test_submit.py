@@ -3,7 +3,7 @@
 
 import urllib.parse
 
-from glinet_profiler.submit import REGISTRY_REPO, prefilled_issue_url
+from glinet4_profiler.submit import REGISTRY_REPO, prefilled_issue_url
 
 PROFILE = {
     "id": "mt6000_4.9.0",

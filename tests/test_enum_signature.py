@@ -1,7 +1,7 @@
 """Tests for the Balanced rich-schema distiller."""
 # pylint: disable=missing-function-docstring
 
-from glinet_profiler.enumerator.signature import signature_of
+from glinet4_profiler.enumerator.signature import signature_of
 
 
 def test_keeps_numbers_bools_null():

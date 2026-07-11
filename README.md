@@ -1,4 +1,4 @@
-# glinet-profiler
+# glinet4-profiler
 
 A small **local** web launcher that captures a GL.iNet router's API surface
 (read-only), sanitizes it into a shareable **profile**, checks whether that
@@ -24,14 +24,14 @@ deliberately submit.
 Once published you'll be able to run it with no install:
 
 ```bash
-uvx glinet-profiler
+uvx glinet4-profiler
 ```
 
 From a source checkout:
 
 ```bash
-uv run glinet-profiler            # starts the launcher, opens your browser
-uv run glinet-profiler --no-browser --port 8765
+uv run glinet4-profiler            # starts the launcher, opens your browser
+uv run glinet4-profiler --no-browser --port 8765
 ```
 
 Then enter your router URL (e.g. `http://192.168.8.1`), username (`root`), and
@@ -42,7 +42,7 @@ password, and click **Capture**. You'll get a sanitized profile, a
 
 The published profile keeps the device **model + firmware**, non-identifying
 **capability flags** (regulatory region + the software/hardware feature map), and
-the **per-method API shape**: status, risk, [gli4py](https://github.com/shauneccles/gli4py)
+the **per-method API shape**: status, risk, [glinet4](https://github.com/glinet4/glinet4)
 coverage, params, and a response **signature**.
 
 The **signature** is distilled from a real response — on your machine, before
@@ -81,10 +81,10 @@ inside it (`glinet_profiler/enumerator/`, originally developed in the gli4py
 project) — there is **no runtime dependency on gli4py** (deps are just
 `aiohttp`, `paramiko`, `libpass`).
 
-- **[gli4py](https://github.com/shauneccles/gli4py)** — the typed GL.iNet Python
+- **[glinet4](https://github.com/glinet4/glinet4)** — the typed GL.iNet Python
   **client library**. Each captured profile records, per method, whether the
   gli4py client already wraps it ("coverage") — a lens for Python developers.
-- **[glinet-registry](https://github.com/shauneccles/glinet-registry)** — the
+- **[glinet-registry](https://github.com/glinet4/glinet4-registry)** — the
   public, community registry of device profiles (browse site + submission bot).
   The launcher fetches its manifest to tell you whether a device is already
   known, and **Submit** opens its issue form. It releases independently of this
@@ -100,10 +100,10 @@ uv run ruff check . && uv run mypy src && uv run pylint $(git ls-files '*.py')
 
 ## The three repos
 
-- **glinet-profiler** (this repo) — the capture launcher + enumeration engine.
-- **[glinet-registry](https://github.com/shauneccles/glinet-registry)** — the
+- **glinet4-profiler** (this repo) — the capture launcher + enumeration engine.
+- **[glinet-registry](https://github.com/glinet4/glinet4-registry)** — the
   device-profile data, browse site, and submission bot.
-- **[gli4py](https://github.com/shauneccles/gli4py)** — the GL.iNet Python client
+- **[glinet4](https://github.com/glinet4/glinet4)** — the GL.iNet Python client
   library (the "coverage" lens shown in each profile).
 
 ## License

@@ -455,7 +455,7 @@ from typing import Any
 
 import aiohttp
 
-DEFAULT_REGISTRY_URL = "https://shauneccles.github.io/glinet-registry/data/index.json"
+DEFAULT_REGISTRY_URL = "https://glinet4.github.io/glinet4-registry/data/index.json"
 
 
 async def fetch_manifest(
@@ -483,7 +483,7 @@ def lookup(model: str, firmware: str, manifest: dict[str, Any] | None) -> dict[s
     return None
 ```
 
-- [ ] **Step 2: `submit.py`** → `REGISTRY_REPO = "shauneccles/glinet-registry"` (one line).
+- [ ] **Step 2: `submit.py`** → `REGISTRY_REPO = "glinet4/glinet4-registry"` (one line).
 
 - [ ] **Step 3: `server.py`** — `make_app(token, *, registry_url=registry_mod.DEFAULT_REGISTRY_URL)`; in `api_enumerate`, after producing `profile`:
 ```python
@@ -557,7 +557,7 @@ def test_lookup_match_miss_and_none():
 - `tests/test_capture.py`: unaffected by registry (it patches `_enumerate`); keep.
 - `tests/test_server.py`: the fixture/test must monkeypatch `registry_mod.fetch_manifest` to return a manifest (so `lookup` works) — add `async def fake_fetch(url, *, timeout=5.0): return MAN` and `monkeypatch.setattr(registry_mod, "fetch_manifest", fake_fetch)`; assert the result event has `registry_reachable` and `lookup`.
 - `tests/test_cli.py`: monkeypatch `cli_mod.fetch_manifest` (return None or a manifest) so the CLI prints the right status; assert the link + the NEW/couldn't-reach text.
-- `tests/test_submit.py`: assert the URL targets `shauneccles/glinet-registry`.
+- `tests/test_submit.py`: assert the URL targets `glinet4/glinet4-registry`.
 
 - [ ] **Step 8: `pyproject.toml`** — nothing ships data now; confirm `[tool.hatch.build.targets.wheel] packages = ["src/glinet_profiler"]` no longer pulls a `data/` dir (it's deleted). No dep change (`aiohttp` already present).
 
@@ -579,18 +579,18 @@ Expected: no residue; all gates green; the wheel (`uv build`) contains no `regis
 - [ ] **Step 1: Create the GitHub repo + push** (PAUSE for the user's go-ahead — public repo creation)
 ```bash
 cd /home/shaunes/dev/oss/glinet-registry
-gh repo create shauneccles/glinet-registry --public --source=. --remote=origin --push \
+gh repo create glinet4/glinet4-registry --public --source=. --remote=origin --push \
   --description="Community registry of GL.iNet device API profiles (data + browse + submission bot)."
 ```
 - [ ] **Step 2: Enable Pages** (source = GitHub Actions) + trigger
 ```bash
-gh api --method POST repos/shauneccles/glinet-registry/pages -f build_type=workflow
-gh workflow run pages.yml --repo shauneccles/glinet-registry
+gh api --method POST repos/glinet4/glinet4-registry/pages -f build_type=workflow
+gh workflow run pages.yml --repo glinet4/glinet4-registry
 ```
 - [ ] **Step 3: Confirm the live manifest** the package fetches
 ```bash
 sleep 25
-curl -s -o /dev/null -w "%{http_code}\n" https://shauneccles.github.io/glinet-registry/data/index.json   # 200
+curl -s -o /dev/null -w "%{http_code}\n" https://glinet4.github.io/glinet4-registry/data/index.json   # 200
 ```
 - [ ] **Step 4:** Enable "Allow GitHub Actions to create and approve pull requests" on `glinet-registry` (Settings → Actions) so the submission bot can open PRs.
 
@@ -602,7 +602,7 @@ curl -s -o /dev/null -w "%{http_code}\n" https://shauneccles.github.io/glinet-re
 
 **Placeholders:** `PIN_SHA_HERE` is resolved in Task 2 Step 3 (the validate step fails if it remains). No TBD.
 
-**Type/interface consistency:** `fetch_manifest(url, *, timeout) -> dict | None` and `lookup(model, firmware, manifest) -> dict | None` are used consistently in `registry.py`, `server.py`, `cli.py`, and the tests. `device_id(model, firmware)` (registry repo) takes two strings — matching the call in `scripts/ingest.py` — distinct from the package's `device_id(device_dict)` (they are now separate codebases sharing only the JSON contract). The result event keys (`profile`, `lookup`, `registry_reachable`, `submit_url`) match between `server.py` and `app.js`. `REGISTRY_REPO` is `shauneccles/glinet-registry` in `submit.py` and asserted in `test_submit.py`.
+**Type/interface consistency:** `fetch_manifest(url, *, timeout) -> dict | None` and `lookup(model, firmware, manifest) -> dict | None` are used consistently in `registry.py`, `server.py`, `cli.py`, and the tests. `device_id(model, firmware)` (registry repo) takes two strings — matching the call in `scripts/ingest.py` — distinct from the package's `device_id(device_dict)` (they are now separate codebases sharing only the JSON contract). The result event keys (`profile`, `lookup`, `registry_reachable`, `submit_url`) match between `server.py` and `app.js`. `REGISTRY_REPO` is `glinet4/glinet4-registry` in `submit.py` and asserted in `test_submit.py`.
 
 ---
 

@@ -5,7 +5,7 @@ from typing import Any
 
 import aiohttp
 
-DEFAULT_REGISTRY_URL = "https://shauneccles.github.io/glinet-registry/data/index.json"
+DEFAULT_REGISTRY_URL = "https://glinet4.github.io/glinet4-registry/data/index.json"
 
 
 async def fetch_manifest(

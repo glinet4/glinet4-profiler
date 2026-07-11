@@ -1,7 +1,7 @@
 """Pure SSH-parser tests (fixtures from live recon)."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet_profiler.enumerator.ssh import (
+from glinet4_profiler.enumerator.ssh import (
     merge_surface,
     parse_account_acl,
     parse_fcgi_workers,

@@ -3,8 +3,8 @@
 
 import json
 
-from glinet_profiler.enumerator.models import DeviceReport, MethodReport, ProbeStatus, Risk
-from glinet_profiler.enumerator.report import summary_lines, to_json, to_markdown
+from glinet4_profiler.enumerator.models import DeviceReport, MethodReport, ProbeStatus, Risk
+from glinet4_profiler.enumerator.report import summary_lines, to_json, to_markdown
 
 
 def _report():

@@ -1,15 +1,15 @@
 """Catalog integrity + verb helpers + coverage."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet_profiler.enumerator.catalog import (
+from glinet4_profiler.enumerator.catalog import (
     CATALOG,
     DESTRUCTIVE_METHODS,
     MUTATING_VERBS,
     is_read_method,
     risk_of,
 )
-from glinet_profiler.enumerator.coverage import covered_by
-from glinet_profiler.enumerator.models import Risk
+from glinet4_profiler.enumerator.coverage import covered_by
+from glinet4_profiler.enumerator.models import Risk
 
 
 def test_catalog_nonempty_and_well_typed():

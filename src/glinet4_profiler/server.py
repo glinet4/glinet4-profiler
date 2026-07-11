@@ -15,7 +15,7 @@ from . import capture as capture_mod
 from . import registry as registry_mod
 from . import submit as submit_mod
 
-_WEB = resources.files("glinet_profiler") / "web"
+_WEB = resources.files("glinet4_profiler") / "web"
 _ALLOWED_HOSTS = ("127.0.0.1", "localhost")
 
 

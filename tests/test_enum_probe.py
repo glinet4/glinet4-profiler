@@ -1,8 +1,8 @@
 """Engine tests against a fake caller (no hardware)."""
 # pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument,import-outside-toplevel
 
-from glinet_profiler.enumerator.models import ProbeStatus
-from glinet_profiler.enumerator.probe import device_id, enumerate_device
+from glinet4_profiler.enumerator.models import ProbeStatus
+from glinet4_profiler.enumerator.probe import device_id, enumerate_device
 
 
 def make_caller(responses):
@@ -39,7 +39,7 @@ async def test_only_read_methods_are_probed():
 
     await enumerate_device(caller, device_info={"model": "x", "firmware_version": "1"})
     assert seen, "should have probed something"
-    from glinet_profiler.enumerator.catalog import (
+    from glinet4_profiler.enumerator.catalog import (
         is_read_method,  # local import keeps the test focused
     )
 

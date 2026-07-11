@@ -411,7 +411,7 @@ git commit -m "feat(ui): SSH ground-truth checked by default"
 - [ ] **Step 1: Close PR #12 with a pointer**
 
 ```bash
-gh pr close 12 --repo shauneccles/gli4py --comment "Superseded: the enumerator engine has moved into glinet-profiler (https://github.com/shauneccles/glinet-profiler) — it belongs with the discovery/collection product, and glinet-profiler no longer depends on gli4py. gli4py keeps its client library. Closing in favor of that repo."
+gh pr close 12 --repo shauneccles/gli4py --comment "Superseded: the enumerator engine has moved into glinet-profiler (https://github.com/glinet4/glinet4-profiler) — it belongs with the discovery/collection product, and glinet-profiler no longer depends on gli4py. gli4py keeps its client library. Closing in favor of that repo."
 ```
 
 - [ ] **Step 2: Delete the `feat/api-enumerator` branch (PAUSE for user go-ahead on the remote delete)**

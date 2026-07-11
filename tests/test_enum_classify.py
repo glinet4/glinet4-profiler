@@ -1,8 +1,8 @@
 """Unit tests for the enumerator probe classifier."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet_profiler.enumerator.classify import classify
-from glinet_profiler.enumerator.models import ProbeStatus
+from glinet4_profiler.enumerator.classify import classify
+from glinet4_profiler.enumerator.models import ProbeStatus
 
 
 def test_result_is_available():

@@ -3,7 +3,7 @@
 
 from pathlib import Path
 
-WEB = Path(__file__).resolve().parent.parent / "src" / "glinet_profiler" / "web"
+WEB = Path(__file__).resolve().parent.parent / "src" / "glinet4_profiler" / "web"
 
 
 def test_index_has_form_controls():
