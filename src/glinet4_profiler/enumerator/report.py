@@ -52,7 +52,7 @@ def to_markdown(report: DeviceReport) -> str:
         "",
         "## Services",
         "",
-        "| Service | Method | Status | Risk | Wrapped by gli4py |",
+        "| Service | Method | Status | Risk | Wrapped by glinet4 |",
         "|---|---|---|---|---|",
     ]
     for m in sorted(report.methods, key=lambda x: (x.service, x.method)):
@@ -60,7 +60,7 @@ def to_markdown(report: DeviceReport) -> str:
             lines.append(
                 f"| {m.service} | {m.method} | {m.status} | {m.risk} | {m.covered_by or '—'} |"
             )
-    lines += ["", "## Available but not yet wrapped by gli4py", ""]
+    lines += ["", "## Available but not yet wrapped by glinet4", ""]
     nw = _not_wrapped(report)
     lines += [
         f"- `{m.service}.{m.method}`" for m in sorted(nw, key=lambda x: (x.service, x.method))
@@ -78,7 +78,7 @@ def summary_lines(report: DeviceReport) -> list[str]:
         f"Device: {report.device.get('model', 'unknown')} ({report.device.get('firmware_version', 'unknown')}) "
         f"[id: {device_id(report.device)}]",
         "Counts: " + ", ".join(f"{k}={v}" for k, v in sorted(counts.items())),
-        f"Not yet wrapped by gli4py ({len(nw)}):",
+        f"Not yet wrapped by glinet4 ({len(nw)}):",
     ]
     lines += [
         f"  - {m.service}.{m.method}" for m in sorted(nw, key=lambda x: (x.service, x.method))

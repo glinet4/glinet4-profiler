@@ -1,5 +1,7 @@
 # glinet4-profiler
 
+[![PyPI](https://img.shields.io/pypi/v/glinet4-profiler)](https://pypi.org/project/glinet4-profiler/)
+
 A small **local** web launcher that captures a GL.iNet router's API surface
 (read-only), sanitizes it into a shareable **profile**, checks whether that
 device + firmware is already in the registry, and lets you download it or open
@@ -109,3 +111,7 @@ uv run ruff check . && uv run mypy src && uv run pylint $(git ls-files '*.py')
 ## License
 
 GPL-3.0-or-later.
+
+---
+
+Part of the **[glinet4](https://github.com/glinet4)** project — [glinet4](https://github.com/glinet4/glinet4) (Python library) · [glinet4-ha](https://github.com/glinet4/glinet4-ha) (Home Assistant) · [glinet4-profiler](https://github.com/glinet4/glinet4-profiler) · [glinet4-registry](https://github.com/glinet4/glinet4-registry)

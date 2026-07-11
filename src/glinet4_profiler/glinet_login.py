@@ -1,4 +1,4 @@
-"""Self-contained GL.iNet challenge-response login (no gli4py/uplink)."""
+"""Self-contained GL.iNet challenge-response login (no glinet4/uplink)."""
 
 import asyncio
 import hashlib

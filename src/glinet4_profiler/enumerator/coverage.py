@@ -1,6 +1,6 @@
 """Map RPC (service, method) pairs to the GLinet method that wraps them."""
 
-GLI4PY_COVERAGE: dict[tuple[str, str], str] = {
+GLINET4_COVERAGE: dict[tuple[str, str], str] = {
     ("system", "get_info"): "router_info",
     ("system", "get_status"): "router_get_status",
     ("system", "get_load"): "router_get_load",
@@ -26,4 +26,4 @@ GLI4PY_COVERAGE: dict[tuple[str, str], str] = {
 
 def covered_by(service: str, method: str) -> str | None:
     """Return the GLinet method wrapping (service, method), or None."""
-    return GLI4PY_COVERAGE.get((service, method))
+    return GLINET4_COVERAGE.get((service, method))
