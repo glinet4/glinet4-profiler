@@ -104,8 +104,12 @@ project) — there is **no runtime dependency on gli4py** (deps are just
 ```bash
 uv sync --all-extras --dev
 uv run pytest -q
-uv run ruff check . && uv run mypy src && uv run pylint $(git ls-files '*.py')
+uvx prek run --all-files   # ruff, mypy, pylint + hygiene hooks
 ```
+
+Lint hooks are managed by [prek](https://github.com/j178/prek) (a drop-in
+replacement for pre-commit) via `.pre-commit-config.yaml`; run
+`uvx prek install` once to have them run automatically on every commit.
 
 ## The three repos
 
