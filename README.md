@@ -104,7 +104,7 @@ project) — there is **no runtime dependency on gli4py** (deps are just
 ```bash
 uv sync --all-extras --dev
 uv run pytest -q
-uvx prek run --all-files   # ruff, mypy, pylint + hygiene hooks
+uvx prek run --all-files   # ruff, mypy, pylint, workflow lint/security (actionlint, zizmor) + hygiene hooks
 ```
 
 Lint hooks are managed by [prek](https://github.com/j178/prek) (a drop-in
