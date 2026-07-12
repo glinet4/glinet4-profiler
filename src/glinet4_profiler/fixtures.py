@@ -28,6 +28,15 @@ from .sanitize import FIXTURE_SANITIZER_VERSION, FixtureSanitizer, ruleset_hash
 
 _PACKAGE_NAME = "glinet4-profiler"
 
+# Services whose read methods return raw free-text log dumps (``{"log": "<blob>"}``) rather
+# than structured state. Free-running log text defeats every anchored, whole-value sanitizer
+# rule — client MACs, hostnames, and IPs appear MID-LINE and pass verbatim (a security review
+# extracted 22 real client MACs from a real capture's ``logread.get_kernel_log``) — and a log
+# blob has near-zero golden-test value for the library anyway, so these services never emit
+# fixtures at all. ``logread`` (get_uboot_log / get_system_log / get_kernel_log / get_crash_log
+# / get_config) is the only such service in the catalog today.
+_LOG_BLOB_SERVICES = frozenset({"logread"})
+
 
 def profiler_version() -> str:
     """Installed ``glinet4-profiler`` distribution version (``0+unknown`` if not installed)."""
@@ -46,10 +55,13 @@ def select_fixture_methods(raw: dict[str, Any]) -> list[tuple[str, str, Any]]:
     requires ``status == "available"``, ``risk == "read"``, and a non-null ``value`` (matching the
     field names ``enumerator.report.to_json`` writes), so a WRITE/DANGEROUS method that somehow
     carries a stray value (e.g. an SSH-discovered write recorded without an HTTP call) can never
-    produce a fixture file.
+    produce a fixture file. Log-shaped services (``_LOG_BLOB_SERVICES``) are excluded outright —
+    their free-text blobs cannot be sanitized by rule and carry no golden-test value.
     """
     out: list[tuple[str, str, Any]] = []
     for service, methods in sorted(raw.get("services", {}).items()):
+        if service in _LOG_BLOB_SERVICES:
+            continue
         for method, rec in sorted(methods.items()):
             if (
                 rec.get("status") == "available"

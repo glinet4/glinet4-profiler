@@ -133,17 +133,29 @@ real API shapes to assert against):
   verbatim — the local topology is the fixture's actual test value.
 - `host:port` / `[ipv6]:port` compounds (e.g. a WireGuard peer's `end_point`)
   are parsed: the address half follows the MAC/IP rules above, the port is
-  kept.
+  kept. A bare-domain `endpoint`/`end_point` with no `:port` is tokenized
+  like any other host field.
 - The personal-field vocabulary (`ssid`, `name`, `hostname`, `user`,
   `email`, `domain`, ...) is shared with the profile flow's signature
   labeler, so a key personal there is never missed here — either
   pseudonymized to a stable token or nulled, whichever leaves nothing to
   re-identify.
-- `modem.*` — SMS bodies, IMEI/ICCID/IMSI/MSISDN, and phone numbers — gets the
-  strictest treatment: every string value is nulled unless explicitly
-  whitelisted as a safe structural/status field. It's the highest-risk
-  service in the catalog, so it defaults to nothing surviving rather than
-  relying on a rule catching every field GL.iNet's firmware might expose.
+- `zonename`/`timezone` (`system.get_timezone_config`) are nulled — an IANA
+  zone name like `Australia/Sydney` is city-level location. Siblings
+  (offsets, booleans) survive, so the response shape is kept.
+- Cellular services (`modem.*`, `sms-forward.*`) — SMS bodies,
+  IMEI/ICCID/IMSI/MSISDN, phone numbers (national-format ones included), and
+  cell-tower identifiers (MCC/MNC/LAC/CID/PCI, which geolocate the device via
+  public tower databases) — get the strictest treatment: every string **and
+  numeric** value is nulled unless explicitly whitelisted as a safe
+  structural/status field. It's the highest-risk surface in the catalog, so
+  it defaults to nothing surviving rather than relying on a rule catching
+  every field GL.iNet's firmware might expose.
+- The `logread` service is **excluded from emission entirely** — its methods
+  (`get_system_log`, `get_kernel_log`, ...) return raw free-text log dumps in
+  which client MACs, hostnames, and IPs appear mid-line, defeating every
+  anchored whole-value sanitizer rule, and a log blob has no golden-test
+  value for the library anyway. No `logread.*.json` file is ever written.
 
 Every rule above is unit-tested (`tests/test_sanitize.py`), but **review the
 output before committing it anywhere** — you know your own network better

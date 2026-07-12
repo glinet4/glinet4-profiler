@@ -1,6 +1,7 @@
 """Tests for the sanitizing projection."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
+import importlib
 import json
 import re
 
@@ -189,6 +190,48 @@ MODEM_INFO_RAW = {
     "modem_name": "Quectel EC25",
     "manufacturer": "Quectel",
     "status": "registered",
+}
+
+# modem.get_cells_info-class shape: serving/neighbour cell records. The mcc/mnc/lac/cid/pci
+# INTEGERS uniquely identify a physical cell tower — public tower databases resolve them to
+# coordinates, geolocating the router as surely as a WAN IP does.
+MODEM_CELLS_INFO_RAW = {
+    "cells": [
+        {
+            "index": 0,
+            "mcc": 505,
+            "mnc": 3,
+            "lac": 12345,
+            "cid": 67890123,
+            "pci": 218,
+            "arfcn": 9410,
+            "rsrp": -95,
+            "rsrq": -10.5,
+            "net_type": "LTE",
+            "band": "B3",
+            "registered": True,
+        },
+    ],
+}
+
+# sms-forward.get_rule_list-class shape: a forward-to number is typically entered in NATIONAL
+# format (no leading '+'), so the E.164 _PHONE value-shape rule never matches it — only the
+# service-scoped strict mode can catch it.
+SMS_FORWARD_RULE_LIST_RAW = {
+    "rules": [
+        {"rule_id": 1, "number": "0412345678", "enable": True},
+    ],
+}
+
+# system.get_timezone_config — real captured mt6000/4.9.0 shape. An IANA zone name is
+# city-level location; the POSIX TZ string encodes the same zone by its abbreviations.
+TIMEZONE_CONFIG_RAW = {
+    "autotimezone_enabled": True,
+    "localtime": 1782522425,
+    "timestamp": 1782486425,
+    "timezone": "AEST-10AEDT,M10.1.0,M4.1.0/3",
+    "tzoffset": "+1000",
+    "zonename": "Australia/Sydney",
 }
 
 
@@ -394,9 +437,7 @@ def test_new_personal_vocabulary_keys_tokenize_consistently(key):
     assert "shaun@example.com" not in json.dumps(a)
 
 
-@pytest.mark.parametrize(
-    "key", ["comment", "description", "desc", "note", "path", "url", "endpoint"]
-)
+@pytest.mark.parametrize("key", ["comment", "description", "desc", "note", "path", "url"])
 def test_free_text_personal_vocabulary_keys_are_nulled(key):
     sanitizer = FixtureSanitizer()
     clean = sanitizer.sanitize({key: "some free-text value nobody needs pseudonymized"})
@@ -585,3 +626,150 @@ def test_plural_of_address_is_not_mangled_by_the_s_stripper():
     sanitizer = FixtureSanitizer()
     clean = sanitizer.sanitize({"address": "some-value"})
     assert re.match(r"^host-\d+$", clean["address"])
+
+
+# ── Round 2, Important fix 2: cellular strict mode nulls non-whitelisted SCALARS too ────────
+# Cell-tower integers (mcc/mnc/lac/cid/pci) pass a strings-only strict mode verbatim and
+# geolocate the device via public tower databases.
+
+
+def test_modem_cell_tower_integers_nulled_under_strict_mode():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"lac": 12345, "cid": 67890123}, service="modem")
+    assert clean == {"lac": None, "cid": None}
+
+
+def test_modem_cells_info_realistic_capture_nulls_geolocating_scalars():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(MODEM_CELLS_INFO_RAW, service="modem")
+    cell = clean["cells"][0]
+    for key in ("mcc", "mnc", "lac", "cid", "pci", "arfcn", "rsrp", "rsrq"):
+        assert cell[key] is None, key
+    assert cell["index"] == 0  # structural whitelist covers ints too
+    assert cell["net_type"] == "LTE" and cell["band"] == "B3"  # enum-ish whitelist still works
+    assert cell["registered"] is True  # bools are capability/state bits, kept
+    blob = json.dumps(clean)
+    assert "67890123" not in blob and "12345" not in blob
+
+
+def test_float_scalar_nulled_under_cellular_strict_mode():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"longitude": 151.2094}, service="modem")
+    assert clean["longitude"] is None
+
+
+def test_modem_error_shape_keeps_err_code():
+    # real captured shape (modem.get_sms_list on a modem-less mt6000): the error contract IS
+    # the fixture's value — err_code must survive strict mode; err_msg (free text) must not.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"err_code": 20002001, "err_msg": "Parameter not found"}, service="modem"
+    )
+    assert clean == {"err_code": 20002001, "err_msg": None}
+
+
+def test_non_cellular_service_keeps_numeric_fields():
+    # the scalar-null strict mode is scoped to cellular services — a numeric field under any
+    # other service (uptime, counters, ids) is the fixture's actual value.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"lac": 12345, "uptime": 99.5}, service="wan")
+    assert clean == {"lac": 12345, "uptime": 99.5}
+
+
+# ── Round 2, Important fix 3: strict mode covers every cellular-hint service, not just
+# service == "modem" — sms-forward carries national-format phone numbers _PHONE can't match ──
+
+
+def test_sms_forward_national_format_number_nulled():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(SMS_FORWARD_RULE_LIST_RAW, service="sms-forward")
+    rule = clean["rules"][0]
+    assert rule["number"] is None  # national format, no '+': only strict mode catches it
+    assert rule["rule_id"] is None  # non-whitelisted scalar on the cellular surface: safer null
+    assert rule["enable"] is True
+    assert "0412345678" not in json.dumps(clean)
+
+
+def test_sms_forward_config_strings_strict_nulled():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"forward_number": "0412345678", "enable": True, "mode": "all"}, service="sms-forward"
+    )
+    assert clean["forward_number"] is None
+    assert clean["enable"] is True
+    assert clean["mode"] == "all"  # enum-ish whitelist applies across the whole cellular surface
+
+
+# ── Round 2, Important fix 4: zonename/timezone leak city-level location ────────────────────
+
+
+def test_timezone_and_zonename_nulled_shape_survives():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(TIMEZONE_CONFIG_RAW)
+    assert clean["zonename"] is None  # "Australia/Sydney" is city-level location
+    assert clean["timezone"] is None  # the POSIX TZ string encodes the same zone
+    assert clean["autotimezone_enabled"] is True  # shape survives: siblings untouched
+    assert clean["localtime"] == 1782522425  # scalar outside cellular strict mode: kept
+    blob = json.dumps(clean)
+    assert "Australia" not in blob and "AEST" not in blob
+
+
+# ── Round 2, Minor: bare-domain end_point (no ":port") + endpoint underscore variant ────────
+
+
+def test_bare_domain_end_point_without_port_tokenized():
+    # a real end_point can be a bare DDNS domain with no ":port" — the host:port compound rule
+    # never fires, so the key itself must be in the host-token set (underscore variant included).
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"end_point": "myhouse.duckdns.org"})
+    assert re.match(r"^host-\d+$", clean["end_point"])
+    assert "duckdns" not in json.dumps(clean)
+
+
+def test_endpoint_key_tokenizes_instead_of_nulling():
+    # "endpoint" moved from the null set to the host-token set: a bare-domain endpoint keeps
+    # cross-payload identity like every other host field, and both spellings share one token.
+    sanitizer = FixtureSanitizer()
+    a = sanitizer.sanitize({"endpoint": "vpn.example.com"})
+    b = sanitizer.sanitize({"end_point": "vpn.example.com"})
+    assert re.match(r"^host-\d+$", a["endpoint"])
+    assert a["endpoint"] == b["end_point"]
+
+
+def test_end_point_with_port_still_keeps_port():
+    # the compound rule still wins for host:port shapes — the port must survive tokenization
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"endpoint": "myhouse.duckdns.org:51820"})
+    host, _, port = clean["endpoint"].partition(":")
+    assert port == "51820"
+    assert re.match(r"^host-\d+$", host)
+
+
+# ── Round 2, Minor: the PERSONAL_FIELDS completeness guard must be a real raise, not an
+# `assert` (stripped under python -O) ────────────────────────────────────────────────────────
+
+
+def test_personal_field_guard_raises_on_uncovered_key():
+    from glinet4_profiler import sanitize as sanitize_module
+    from glinet4_profiler.enumerator import signature
+
+    original = signature.PERSONAL_FIELDS
+    try:
+        signature.PERSONAL_FIELDS = (*original, "shoe_size")
+        with pytest.raises(RuntimeError, match="shoe_size"):
+            importlib.reload(sanitize_module)
+    finally:
+        signature.PERSONAL_FIELDS = original
+        importlib.reload(sanitize_module)
+
+
+def test_sanitize_module_has_no_module_level_assert():
+    # the completeness guard must survive `python -O`: no bare `assert` at module scope
+    import ast
+    import inspect
+
+    from glinet4_profiler import sanitize as sanitize_module
+
+    tree = ast.parse(inspect.getsource(sanitize_module))
+    module_level_asserts = [n for n in tree.body if isinstance(n, ast.Assert)]
+    assert not module_level_asserts

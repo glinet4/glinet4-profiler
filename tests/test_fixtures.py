@@ -94,6 +94,28 @@ RAW = {
                 "value": None,
             },
         },
+        "logread": {
+            # log-shaped service: an available READ whose value is a raw free-text log blob.
+            # Client MACs/hostnames appear MID-LINE, so every anchored whole-value sanitizer
+            # rule passes them verbatim — the service must never emit a fixture at all.
+            "get_kernel_log": {
+                "status": "available",
+                "error_code": None,
+                "risk": "read",
+                "discovered_by": "catalog",
+                "covered_by": None,
+                "params": None,
+                "signature": None,
+                "value": {
+                    "log": (
+                        "[    5.170050] br-lan: port 2(ra0) entered forwarding state\n"
+                        "[   12.345678] ra0: STA 94:83:c4:aa:bb:01 IEEE 802.11: associated\n"
+                        "[   99.000001] daemon.info dnsmasq-dhcp: DHCPACK(br-lan) "
+                        "192.168.8.101 94:83:c4:aa:bb:01 Shaunes-iPhone\n"
+                    )
+                },
+            },
+        },
     },
 }
 
@@ -107,10 +129,24 @@ def test_select_fixture_methods_only_successful_reads():
         ("system", "get_info"),
     ]
     # excluded: reboot (dangerous, despite "available"), block_client (discovered/no value),
-    # wifi.get_config (errored/no value)
+    # wifi.get_config (errored/no value), logread.* (log-shaped service, despite available+read)
     assert ("system", "reboot") not in names
     assert ("clients", "block_client") not in names
     assert ("wifi", "get_config") not in names
+    assert ("logread", "get_kernel_log") not in names
+
+
+def test_log_shaped_services_never_emit_fixtures():
+    # security review round 2: 22 real client MACs were extracted from a real capture's
+    # logread.get_kernel_log — the raw blob passes every anchored sanitizer regex verbatim.
+    selected = select_fixture_methods(RAW)
+    assert all(service != "logread" for service, _method, _value in selected)
+    _fixture_id, files, manifest = build_fixture_set(RAW)
+    assert "logread.get_kernel_log.json" not in files
+    assert all(not name.startswith("logread.") for name in manifest["methods"])
+    # the raw log's contents never reach any emitted fixture
+    blob = json.dumps(files)
+    assert "DHCPACK" not in blob and "94:83:c4" not in blob
 
 
 def test_build_fixture_set_names_files_and_sanitizes():

@@ -74,7 +74,7 @@ def project_report(
 # response bodies carry things (client MACs, SSIDs, WAN IPs, DHCP hostnames) the value-stripped
 # registry flow never had to consider.
 
-FIXTURE_SANITIZER_VERSION = 2  # bump on any behavioral change to a rule below
+FIXTURE_SANITIZER_VERSION = 3  # bump on any behavioral change to a rule below
 
 _MAC = re.compile(r"^(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")
 # Locally-administered, unicast prefix (U/L bit set on the first octet — 0x02) — by construction
@@ -108,27 +108,57 @@ _HOST_KEYS = (
     "domain",
     "ddns",
     "email",
+    # "endpoint" tokenizes (not nulls): a bare-domain endpoint with no ":port" — WireGuard's
+    # real "end_point" spelling included, which never boundary-matches "endpoint" — keeps
+    # cross-payload identity like every other host field; ":port" compounds keep the port via
+    # _sanitize_host_port, which runs first.
+    "endpoint",
+    "end_point",
 )
 # Free-text/content-free personal fields: no cross-payload identity worth preserving, so nulling
-# is simplest and safest (the other half of enumerator.signature.PERSONAL_FIELDS).
-_PERSONAL_NULL_KEYS = ("comment", "description", "desc", "note", "path", "url", "endpoint")
-assert set(PERSONAL_FIELDS) <= set(_SSID_KEYS) | set(_HOST_KEYS) | set(_PERSONAL_NULL_KEYS), (
-    "enumerator.signature.PERSONAL_FIELDS grew a key sanitize.py doesn't handle yet"
+# is simplest and safest (the rest of enumerator.signature.PERSONAL_FIELDS).
+_PERSONAL_NULL_KEYS = ("comment", "description", "desc", "note", "path", "url")
+# Location-revealing keys (system.get_timezone_config): an IANA zone name ("Australia/Sydney")
+# is city-level location, and the POSIX TZ string ("AEST-10AEDT,...") encodes the same zone by
+# its abbreviations. Nulled anywhere — siblings (offsets, booleans) survive, so shape is kept.
+_LOCATION_NULL_KEYS = ("zonename", "timezone")
+_UNCOVERED_PERSONAL_FIELDS = set(PERSONAL_FIELDS) - (
+    set(_SSID_KEYS) | set(_HOST_KEYS) | set(_PERSONAL_NULL_KEYS)
 )
+if _UNCOVERED_PERSONAL_FIELDS:
+    # A real raise, not `assert` (which is stripped under `python -O`): a PERSONAL_FIELDS entry
+    # with no sanitizer rule is a silent leak, so importing this module must fail loudly.
+    raise RuntimeError(
+        "enumerator.signature.PERSONAL_FIELDS grew keys sanitize.py doesn't handle yet: "
+        f"{sorted(_UNCOVERED_PERSONAL_FIELDS)}"
+    )
 
 # Cellular/SMS surface (Critical fix 3): the highest-risk service in the catalog — real
 # subscriber/hardware identifiers and message content, not just network topology.
 _CELLULAR_ID_KEYS = ("imei", "iccid", "imsi", "msisdn")
 _SMS_CONTENT_KEYS = ("content", "message", "text")
-_MODEM_SERVICE = "modem"
 # Substring hints (not boundary-matched — service names are whole catalog keys, not
 # underscore-joined) for which services carry cellular/SMS data at all: "modem" (the RPC
-# service) and "sms-forward" (SMS-forwarding rules, which can carry a forward-to number).
+# service) and "sms-forward" (SMS-forwarding rules, which carry a forward-to phone number —
+# typically in NATIONAL format, no '+', which the E.164 _PHONE value-shape rule can never
+# match). Every hinted service gets the full wholesale-null strict mode below.
 _CELLULAR_SERVICE_HINTS = ("modem", "sms")
-# Fields safe to keep verbatim even under modem.*'s wholesale-null strict mode: structural/
-# enum-like values that describe capability/state, not subscriber or hardware identity. Kept
-# deliberately short — "safer default for the highest-risk service" per the security review.
-_MODEM_STRING_WHITELIST = ("status", "type", "net_type", "network_type", "mode", "state", "band")
+# Fields safe to keep verbatim even under the cellular surface's wholesale-null strict mode:
+# structural/enum-like values that describe capability/state or the API's error contract, not
+# subscriber, hardware, or location identity. Kept deliberately short — "safer default for the
+# highest-risk service" per the security review. NOTE: never add "id"/"code" here — "cell_id" /
+# "location_area_code"-class keys would boundary-match them and geolocate the device.
+_CELLULAR_STRICT_WHITELIST = (
+    "status",
+    "type",
+    "net_type",
+    "network_type",
+    "mode",
+    "state",
+    "band",
+    "index",  # list position: structural, not identity
+    "err_code",  # the error contract is a fixture's whole value for capability-gated methods
+)
 # E.164-shaped phone number ('+', no leading 0, 7-15 total digits) — conservative on purpose
 # (requires the leading '+') so it doesn't collide with bare numeric IDs/serials elsewhere.
 _PHONE = re.compile(r"^\+[1-9]\d{6,14}$")
@@ -156,11 +186,24 @@ def _is_cellular_service(service: str | None) -> bool:
     return service is not None and any(hint in service for hint in _CELLULAR_SERVICE_HINTS)
 
 
+def _cellular_strict_nulls(key: str | None, service: str | None) -> bool:
+    """True when the cellular strict mode nulls this value: a non-whitelisted key under any
+    cellular-hint service (``modem``, ``sms-forward``, ...). The short whitelist is the only
+    escape — strings and numbers alike default to ``None`` on this surface (cell-tower integers
+    like ``lac``/``cid`` geolocate a device as surely as a WAN IP does).
+    """
+    if not _is_cellular_service(service):
+        return False
+    return key is None or not _key_matches(key, _CELLULAR_STRICT_WHITELIST)
+
+
 def _dict_key_forces_null(key: str, service: str | None) -> bool:
     """True if *key*'s entire value must be replaced with ``None``, regardless of its shape."""
     if key_is_secret(key):
         return True
     if _key_matches(key, _PERSONAL_NULL_KEYS):
+        return True
+    if _key_matches(key, _LOCATION_NULL_KEYS):
         return True
     if _key_matches(key, _CELLULAR_ID_KEYS):
         return True
@@ -232,7 +275,7 @@ class FixtureSanitizer:
         """Return a deep-sanitized copy of *value* (a raw JSON-RPC ``result``).
 
         *service* is the owning catalog service name (e.g. ``"modem"``), when known — it gates
-        the cellular/SMS-only rules (SMS body nulling, the modem.* wholesale-null strict mode)
+        the cellular/SMS-only rules (SMS body nulling, the cellular wholesale-null strict mode)
         so they never fire outside that surface. Omit it for value-shape rules that apply
         everywhere regardless of context (MAC/IP/host:port/phone/opaque-blob).
         """
@@ -248,6 +291,13 @@ class FixtureSanitizer:
             return [self.sanitize(v, key, service) for v in value]
         if isinstance(value, str):
             return self._sanitize_str(value, key, service)
+        if isinstance(value, bool):
+            return value  # a capability/state bit is never identifying on its own
+        if isinstance(value, (int, float)) and _cellular_strict_nulls(key, service):
+            # Strict mode covers non-whitelisted NUMBERS too: cell-tower integers (mcc/mnc/
+            # lac/cid/pci) resolve to coordinates via public tower databases — a strings-only
+            # strict mode would pass them verbatim.
+            return None
         return value
 
     def _sanitize_str(self, value: str, key: str | None, service: str | None) -> str | None:
@@ -262,14 +312,12 @@ class FixtureSanitizer:
             return host_port_out
         if _PHONE.match(value):
             return None  # phone-number-shaped: null anywhere, key-agnostic
-        if service == _MODEM_SERVICE and value:
-            # Strict mode takes precedence over the softer tokenize rules below: "modem.*
+        if value and _cellular_strict_nulls(key, service):
+            # Strict mode takes precedence over the softer tokenize rules below: "cellular
             # strings nulled wholesale unless whitelisted" must mean exactly that (null, not a
-            # token) for the highest-risk service — it must not be softened by a key that also
+            # token) for the highest-risk surface — it must not be softened by a key that also
             # happens to end in e.g. "_name".
-            whitelisted = key is not None and _key_matches(key, _MODEM_STRING_WHITELIST)
-            if not whitelisted:
-                return None
+            return None
         if key is not None and value:
             if _key_matches(key, _SSID_KEYS):
                 return self._token(value, self._ssids, "ssid")
@@ -353,10 +401,11 @@ def ruleset_hash() -> str:
             "ssid_keys": _SSID_KEYS,
             "host_keys": _HOST_KEYS,
             "personal_null_keys": _PERSONAL_NULL_KEYS,
+            "location_null_keys": _LOCATION_NULL_KEYS,
             "cellular_id_keys": _CELLULAR_ID_KEYS,
             "sms_content_keys": _SMS_CONTENT_KEYS,
             "cellular_service_hints": _CELLULAR_SERVICE_HINTS,
-            "modem_string_whitelist": _MODEM_STRING_WHITELIST,
+            "cellular_strict_whitelist": _CELLULAR_STRICT_WHITELIST,
             "mac_fake_prefix": _MAC_FAKE_PREFIX,
             "ipv4_doc_ranges": _IPV4_DOC_RANGES,
         },
