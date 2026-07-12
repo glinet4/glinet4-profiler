@@ -2,7 +2,7 @@
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib.metadata import version as pkg_version
 
 from glinet4_profiler.fixtures import (
@@ -138,7 +138,7 @@ def test_build_fixture_set_pseudonymizes_macs_consistently_across_methods():
 
 
 def test_build_fixture_set_manifest_has_provenance_fields():
-    when = datetime(2026, 7, 13, 12, 0, 0, tzinfo=timezone.utc)
+    when = datetime(2026, 7, 13, 12, 0, 0, tzinfo=UTC)
     _fixture_id, _files, manifest = build_fixture_set(RAW, captured_at=when)
     assert manifest["id"] == "mt6000_4.9.0"
     assert manifest["model"] == "mt6000"
@@ -155,7 +155,7 @@ def test_build_fixture_set_manifest_has_provenance_fields():
 
 
 def test_write_fixture_set_writes_files_and_manifest(tmp_path):
-    when = datetime(2026, 7, 13, 12, 0, 0, tzinfo=timezone.utc)
+    when = datetime(2026, 7, 13, 12, 0, 0, tzinfo=UTC)
     target = write_fixture_set(RAW, tmp_path, captured_at=when)
     assert target == tmp_path / "mt6000_4.9.0"
     assert (target / "system.get_info.json").exists()

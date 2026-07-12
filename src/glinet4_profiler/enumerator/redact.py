@@ -25,12 +25,16 @@ _SECRET_TOKENS = (
     "sn",
     "ca",
     "cert",
+    "certificate",
     "dh",
     "ta",
     "pem",
     "csr",
 )
-_OPAQUE = re.compile(r"^[A-Za-z0-9+/=_-]+$")
+# Long, high-entropy-looking strings are secret-shaped regardless of what their key is called
+# (a stray "config"/"data" field can carry a raw key/cert blob). Public — sanitize.FixtureSanitizer
+# reuses this exact heuristic as a key-name-agnostic backstop rather than copying the pattern.
+OPAQUE_BLOB = re.compile(r"^[A-Za-z0-9+/=_-]+$")
 _MAC_VALUE = re.compile(
     r"(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}"
 )  # device identifier; scrub anywhere
@@ -48,7 +52,7 @@ def key_is_secret(key: str) -> bool:
 def _redact_str(value: str, key: str | None) -> str:
     if key is not None and key_is_secret(key):
         return REDACTED
-    if len(value) >= 64 and _OPAQUE.match(value):
+    if len(value) >= 64 and OPAQUE_BLOB.match(value):
         return REDACTED
     return _MAC_VALUE.sub(REDACTED, value)  # scrub MAC addresses (incl. client MACs) anywhere
 

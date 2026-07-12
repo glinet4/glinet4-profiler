@@ -17,7 +17,7 @@ call site below does that before anything touches disk.
 """
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _pkg_version
 from pathlib import Path
@@ -74,13 +74,14 @@ def build_fixture_set(
     sanitizer = FixtureSanitizer()
     methods = select_fixture_methods(raw)
     files = {
-        f"{service}.{method}.json": sanitizer.sanitize(value) for service, method, value in methods
+        f"{service}.{method}.json": sanitizer.sanitize(value, service=service)
+        for service, method, value in methods
     }
     manifest = {
         "id": fixture_id,
         "model": device.get("model"),
         "firmware_version": device.get("firmware_version"),
-        "captured_at": (captured_at or datetime.now(timezone.utc)).isoformat(),
+        "captured_at": (captured_at or datetime.now(UTC)).isoformat(),
         "profiler_version": profiler_version(),
         "sanitizer_version": FIXTURE_SANITIZER_VERSION,
         "ruleset_hash": ruleset_hash(),

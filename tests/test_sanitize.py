@@ -126,6 +126,71 @@ WAN_RAW = {
     },
 }
 
+# ── Real-shape payloads for the sanitizer-gaps fixes ────────────────────────────────────────
+# Field names/shapes below are taken from a real captured GL-MT6000/4.9.0 device report
+# (gli4py/docs/devices/mt6000_4.9.0.json, services["wg-server"]["get_peer_list"] and
+# services["wg-client"]["get_group_list"]) — the same schema the security review confirmed the
+# holes against. The real capture's "end_point" was an empty string (peer never connected); a
+# populated value is used here to exercise the host:port rule the review flagged as missing.
+WG_SERVER_PEER_LIST_RAW = {
+    "peers": [
+        {
+            "peer_id": 7089,
+            "name": "Shauns Pixel 10",
+            "end_point": "51.68.44.10:51820",
+            "allowed_ips": "0.0.0.0/0",
+            "client_ip": "10.0.0.2/24",
+            "dns": "10.0.0.1",
+            "enabled": True,
+            "mtu": 1420,
+            "persistent_keepalive": 25,
+            "presharedkey_enable": False,
+            "private_key": "yAnRealPrivateKeyBase64==",
+            "public_key": "yAnRealPublicKeyBase64==",
+        },
+    ],
+}
+
+WG_CLIENT_GROUP_LIST_RAW = {
+    "groups": [
+        {
+            "group_id": 6666,
+            "group_name": "AzireVPN",
+            "group_type": 1,
+            "auth_type": 1,
+            "username": "shaun@example.com",
+            "password": "hunter2",
+            "peer_count": 0,
+            "procedure": 0,
+            "show": False,
+        },
+    ],
+}
+
+# modem.get_sms_list-class shape: an SMS inbox entry carries a sender phone number and a free-text
+# body — the highest-risk surface in the catalog (real subscriber identity + message content).
+MODEM_SMS_LIST_RAW = {
+    "sms": [
+        {
+            "index": 1,
+            "number": "+15551234567",
+            "content": "Your verification code is 482913",
+            "date": "24/01/15,10:22:31+32",
+            "unread": True,
+        },
+    ],
+}
+
+MODEM_INFO_RAW = {
+    "imei": "354864102345678",
+    "iccid": "8991101200003204514",
+    "imsi": "310150123456789",
+    "msisdn": "+15551234567",
+    "modem_name": "Quectel EC25",
+    "manufacturer": "Quectel",
+    "status": "registered",
+}
+
 
 def test_pseudonymizes_macs_consistently_within_a_set():
     sanitizer = FixtureSanitizer()
@@ -288,3 +353,235 @@ def test_ruleset_hash_is_deterministic_and_short():
     second = ruleset_hash()
     assert first == second
     assert re.match(r"^[0-9a-f]{16}$", first)
+
+
+# ── Critical fix 1: the sanitizer must incorporate enumerator.signature's personal-field
+# vocabulary (single source of truth) instead of hand-rolling its own smaller key list ─────────
+
+
+def test_personal_field_vocabulary_is_fully_covered_by_a_rule():
+    # regression guard: every key in enumerator.signature.PERSONAL_FIELDS must be handled by
+    # *some* sanitizer rule (tokenize or null) — this fails loudly if a future addition to the
+    # shared vocabulary is forgotten here, instead of silently leaking.
+    from glinet4_profiler import sanitize as sanitize_module
+    from glinet4_profiler.enumerator.signature import PERSONAL_FIELDS
+
+    covered = (
+        set(sanitize_module._SSID_KEYS)  # pylint: disable=protected-access
+        | set(sanitize_module._HOST_KEYS)  # pylint: disable=protected-access
+        | set(sanitize_module._PERSONAL_NULL_KEYS)  # pylint: disable=protected-access
+    )
+    missing = set(PERSONAL_FIELDS) - covered
+    assert not missing, f"PERSONAL_FIELDS entries with no sanitizer rule: {missing}"
+
+
+def test_alias_field_tokenized_as_host_token():
+    sanitizer = FixtureSanitizer()
+    a = sanitizer.sanitize({"alias": "Shaunes-Laptop"})
+    b = sanitizer.sanitize({"alias": "Shaunes-Laptop"})
+    assert a["alias"] == b["alias"]
+    assert re.match(r"^host-\d+$", a["alias"])
+    assert "Shaunes-Laptop" not in json.dumps(a)
+
+
+@pytest.mark.parametrize("key", ["username", "user", "label", "peer", "server", "domain", "email"])
+def test_new_personal_vocabulary_keys_tokenize_consistently(key):
+    sanitizer = FixtureSanitizer()
+    a = sanitizer.sanitize({key: "shaun@example.com"})
+    b = sanitizer.sanitize({key: "shaun@example.com"})
+    assert a[key] == b[key]
+    assert re.match(r"^host-\d+$", a[key])
+    assert "shaun@example.com" not in json.dumps(a)
+
+
+@pytest.mark.parametrize(
+    "key", ["comment", "description", "desc", "note", "path", "url", "endpoint"]
+)
+def test_free_text_personal_vocabulary_keys_are_nulled(key):
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({key: "some free-text value nobody needs pseudonymized"})
+    assert clean[key] is None
+
+
+def test_wg_client_group_list_username_and_password_sanitized():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(WG_CLIENT_GROUP_LIST_RAW)
+    group = clean["groups"][0]
+    assert group["password"] is None  # secret key -> nulled
+    assert group["username"] != "shaun@example.com"
+    assert re.match(r"^host-\d+$", group["username"])
+    # "group_name" ends on the "_name" boundary -> tokenized too (pre-existing rule, not new
+    # here): a VPN group name can be identifying (e.g. "My Home Office"), unlike categorical
+    # fields such as "group_type"/"auth_type" (ints, untouched) which stay verbatim.
+    assert group["group_name"] != "AzireVPN"
+    assert re.match(r"^host-\d+$", group["group_name"])
+    assert group["auth_type"] == 1
+    blob = json.dumps(clean)
+    assert "hunter2" not in blob and "shaun@example.com" not in blob
+
+
+# ── Critical fix 2: host:port compound strings (WireGuard end_point format) ────────────────
+
+
+def test_public_ip_port_endpoint_sanitized_ip_kept_port():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"end_point": "51.68.44.10:51820"})
+    addr, _, port = clean["end_point"].partition(":")
+    assert port == "51820"
+    assert addr != "51.68.44.10"
+    assert addr.startswith(("192.0.2.", "198.51.100.", "203.0.113."))
+
+
+def test_private_ip_port_endpoint_kept_verbatim():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"end_point": "192.168.8.1:51820"})
+    assert clean["end_point"] == "192.168.8.1:51820"  # LAN topology info
+
+
+def test_ipv6_bracket_port_endpoint_sanitized():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"end_point": "[2606:4700:4700::1111]:51820"})
+    assert clean["end_point"].startswith("[2001:db8:")
+    assert clean["end_point"].endswith("]:51820")
+    assert "2606:4700:4700::1111" not in clean["end_point"]
+
+
+def test_empty_endpoint_left_alone():
+    # matches the real captured mt6000 wg-server.get_peer_list value for a never-connected peer
+    sanitizer = FixtureSanitizer()
+    assert sanitizer.sanitize({"end_point": ""}) == {"end_point": ""}
+
+
+def test_domain_port_endpoint_tokenizes_host_keeps_port():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"end_point": "myhouse.duckdns.org:51820"})
+    host, _, port = clean["end_point"].partition(":")
+    assert port == "51820"
+    assert host != "myhouse.duckdns.org"
+    assert re.match(r"^host-\d+$", host)
+
+
+def test_time_of_day_shaped_value_is_not_mistaken_for_host_port():
+    sanitizer = FixtureSanitizer()
+    assert sanitizer.sanitize({"t": "8:30"}) == {"t": "8:30"}
+
+
+def test_host_port_ip_shares_pseudonym_with_bare_ip_elsewhere():
+    sanitizer = FixtureSanitizer()
+    bare = sanitizer.sanitize({"gateway": "51.68.44.10"})
+    compound = sanitizer.sanitize({"end_point": "51.68.44.10:51820"})
+    addr, _, _port = compound["end_point"].partition(":")
+    assert addr == bare["gateway"]  # same real public IP -> same fake IP, in or out of a compound
+
+
+def test_wg_server_peer_list_realistic_capture_leaks_nothing():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(WG_SERVER_PEER_LIST_RAW)
+    peer = clean["peers"][0]
+    assert peer["private_key"] is None and peer["public_key"] is None
+    assert peer["name"] != "Shauns Pixel 10"
+    addr, _, port = peer["end_point"].partition(":")
+    assert port == "51820" and addr != "51.68.44.10"
+    assert peer["client_ip"] == "10.0.0.2/24"  # VPN-internal address: topology, kept
+    blob = json.dumps(clean)
+    for secret in (
+        "Shauns Pixel 10",
+        "51.68.44.10",
+        "yAnRealPrivateKeyBase64",
+        "yAnRealPublicKeyBase64",
+    ):
+        assert secret not in blob
+
+
+# ── Critical fix 3: cellular/SMS surface ─────────────────────────────────────────────────────
+
+
+@pytest.mark.parametrize("key", ["imei", "iccid", "imsi", "msisdn"])
+def test_cellular_identifier_keys_nulled_anywhere(key):
+    # general, service-agnostic rule: these are sensitive hardware/subscriber identifiers no
+    # matter which service happens to carry them.
+    sanitizer = FixtureSanitizer()
+    assert sanitizer.sanitize({key: "354864102345678"}) == {key: None}
+
+
+def test_phone_number_shaped_value_nulled_key_agnostic():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"contact": "+15557654321"})
+    assert clean["contact"] is None
+
+
+def test_modem_sms_list_number_and_content_nulled():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(MODEM_SMS_LIST_RAW, service="modem")
+    entry = clean["sms"][0]
+    assert entry["number"] is None
+    assert entry["content"] is None
+    assert entry["index"] == 1  # structural field kept
+    assert entry["unread"] is True
+    blob = json.dumps(clean)
+    assert "+15551234567" not in blob
+    assert "482913" not in blob
+
+
+@pytest.mark.parametrize("key", ["content", "message", "text"])
+def test_sms_body_keys_nulled_only_under_cellular_service(key):
+    sanitizer = FixtureSanitizer()
+    modem_scoped = sanitizer.sanitize({key: "hello"}, service="modem")
+    unscoped = sanitizer.sanitize({key: "hello"})
+    assert modem_scoped[key] is None
+    assert unscoped[key] == "hello"  # same key, no cellular service context -> not touched
+
+
+def test_modem_service_strict_mode_nulls_wholesale_unless_whitelisted():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(MODEM_INFO_RAW, service="modem")
+    assert clean["imei"] is None
+    assert clean["iccid"] is None
+    assert clean["imsi"] is None
+    assert clean["msisdn"] is None
+    assert clean["modem_name"] is None  # not whitelisted -> nulled even though not "personal"
+    assert clean["manufacturer"] is None  # ditto
+    assert clean["status"] == "registered"  # whitelisted structural/enum field -> kept
+
+
+def test_non_modem_service_keeps_unrelated_string_fields():
+    # the strict wholesale-null mode is scoped to service == "modem" — it must not leak into
+    # every other service's fixtures.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"manufacturer": "Quectel"}, service="wg-server")
+    assert clean["manufacturer"] == "Quectel"
+
+
+# ── Important fix 4: OPAQUE_BLOB value-level backstop (key-name-agnostic) ──────────────────
+
+
+def test_opaque_blob_backstop_nulls_high_entropy_value_under_any_key():
+    sanitizer = FixtureSanitizer()
+    blob = "A1b2" * 20  # 80 chars, base64-ish — same shape enumerator.redact treats as opaque
+    clean = sanitizer.sanitize({"config_blob": blob})
+    assert clean["config_blob"] is None
+
+
+def test_short_string_under_generic_key_is_not_touched_by_opaque_backstop():
+    sanitizer = FixtureSanitizer()
+    assert sanitizer.sanitize({"config_blob": "short"}) == {"config_blob": "short"}
+
+
+# ── Important fix 5: plural/variant key names match the singular token ─────────────────────
+
+
+@pytest.mark.parametrize(
+    ("key", "expected_prefix"),
+    [("aliases", "host"), ("hostnames", "host"), ("usernames", "host"), ("ssids", "ssid")],
+)
+def test_plural_key_names_match_singular_token(key, expected_prefix):
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({key: "some-value"})
+    assert re.match(rf"^{expected_prefix}-\d+$", clean[key])
+
+
+def test_plural_of_address_is_not_mangled_by_the_s_stripper():
+    # "address" already ends in "ss" — the plural stripper must not turn it into "addres"
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"address": "some-value"})
+    assert re.match(r"^host-\d+$", clean["address"])

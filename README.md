@@ -131,11 +131,35 @@ real API shapes to assert against):
 - Public IPs are replaced with documentation-range addresses (`192.0.2.0/24`,
   `2001:db8::/32`); your **LAN** addresses (e.g. `192.168.x.x`) are kept
   verbatim — the local topology is the fixture's actual test value.
+- `host:port` / `[ipv6]:port` compounds (e.g. a WireGuard peer's `end_point`)
+  are parsed: the address half follows the MAC/IP rules above, the port is
+  kept.
+- The personal-field vocabulary (`ssid`, `name`, `hostname`, `user`,
+  `email`, `domain`, ...) is shared with the profile flow's signature
+  labeler, so a key personal there is never missed here — either
+  pseudonymized to a stable token or nulled, whichever leaves nothing to
+  re-identify.
+- `modem.*` — SMS bodies, IMEI/ICCID/IMSI/MSISDN, and phone numbers — gets the
+  strictest treatment: every string value is nulled unless explicitly
+  whitelisted as a safe structural/status field. It's the highest-risk
+  service in the catalog, so it defaults to nothing surviving rather than
+  relying on a rule catching every field GL.iNet's firmware might expose.
 
 Every rule above is unit-tested (`tests/test_sanitize.py`), but **review the
 output before committing it anywhere** — you know your own network better
 than an automated tool does. Once you're happy with it, open a PR against the
 library's `tests/fixtures/` with the new `<model>_<firmware>/` directory.
+
+**Caveat on MAC/IP/token pseudonym numbering:** the `-N` suffix each fake
+MAC/IP/SSID/token gets is assigned **positionally** — in the order that real
+value is first *encountered* while walking the capture (methods sorted by
+`(service, method)`, then each payload's own key order). Two captures of the
+same physical device can walk fields in a different order (the router's own
+JSON key order isn't guaranteed stable across firmware/API calls), so the
+same real MAC/SSID/etc. can land on a *different* fake index between two
+regenerations of "the same" fixture set. A diff between two fixture sets can
+therefore look noisier than the underlying device state actually changed —
+don't read positional-index churn alone as a meaningful change.
 
 ## Development
 
