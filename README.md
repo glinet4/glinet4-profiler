@@ -99,6 +99,44 @@ project) — there is **no runtime dependency on gli4py** (deps are just
   known, and **Submit** opens its issue form. It releases independently of this
   package.
 
+## Contributing fixtures for the library's golden tests
+
+Beyond a publishable profile, you can capture a **fixture set**: real (but
+sanitized) raw RPC responses, one JSON file per `service.method`, for the
+[glinet4](https://github.com/glinet4/glinet4) library's golden tests.
+
+```bash
+uv run glinet4-profiler 192.168.8.1 --fixtures-out ./fixtures
+```
+
+This is a separate, always-read-only capture (it never HTTP-calls a
+write/dangerous endpoint, regardless of `--dangerous`) that writes
+`./fixtures/<model>_<firmware>/<service>.<method>.json` — the sanitized raw
+`result` for every successfully-probed read method — plus a `manifest.json`
+recording provenance: model, firmware, capture date, profiler version, and
+the sanitizer's version + ruleset hash.
+
+Sanitization here is **stricter, and different**, from the profile flow
+above — raw response *values* survive on purpose (the library's tests need
+real API shapes to assert against):
+
+- MAC addresses are pseudonymized **consistently**: the same real MAC always
+  maps to the same fake MAC everywhere in the set, so cross-payload identity
+  (e.g. a client's MAC in both `clients.get_list` and
+  `lan.get_static_bind_list`) survives.
+- SSIDs and hostnames become `ssid-N` / `host-N` tokens (also consistent
+  within the set).
+- Any field whose key looks like a secret (`password`, `key`, `token`,
+  `secret`, `nonce`, `salt`, ...) is nulled out.
+- Public IPs are replaced with documentation-range addresses (`192.0.2.0/24`,
+  `2001:db8::/32`); your **LAN** addresses (e.g. `192.168.x.x`) are kept
+  verbatim — the local topology is the fixture's actual test value.
+
+Every rule above is unit-tested (`tests/test_sanitize.py`), but **review the
+output before committing it anywhere** — you know your own network better
+than an automated tool does. Once you're happy with it, open a PR against the
+library's `tests/fixtures/` with the new `<model>_<firmware>/` directory.
+
 ## Development
 
 ```bash

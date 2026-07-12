@@ -9,7 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from .capture import capture
+from .capture import ProgressFn, capture, capture_raw
+from .fixtures import write_fixture_set
 from .registry import DEFAULT_REGISTRY_URL, fetch_manifest, lookup
 from .server import serve
 from .submit import prefilled_issue_url
@@ -49,6 +50,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--output", "-o", help="write the profile JSON here (default: <id>.json in the cwd)"
     )
+    parser.add_argument(
+        "--fixtures-out",
+        metavar="DIR",
+        help="instead of a profile, capture read-only raw responses, sanitize them (consistent "
+        "MAC/IP/SSID/hostname pseudonymization — see sanitize.FixtureSanitizer), and write one "
+        "JSON fixture per (service, method) plus a manifest.json under DIR/<model>_<firmware>/. "
+        "For contributing golden-test fixtures to the glinet4 library; always read-only, "
+        "ignores --dangerous/--keep-data/--output. Review the output before committing it.",
+    )
     # web-UI mode flags (used when no IP is given)
     parser.add_argument("--port", type=int, default=0, help="web UI port (default: ephemeral)")
     parser.add_argument("--no-browser", action="store_true", help="do not open a browser")
@@ -77,6 +87,9 @@ async def _capture_cli(args: argparse.Namespace) -> int:
 
     async def _progress(event: dict[str, Any]) -> None:
         print(f"  {event.get('message', '')}", file=sys.stderr)
+
+    if args.fixtures_out:
+        return await _fixtures_cli(args, password, _progress)
 
     dangerous = args.dangerous or args.include_destructive  # destructive implies write-probing
     try:
@@ -120,4 +133,22 @@ async def _capture_cli(args: argparse.Namespace) -> int:
         print("Status:  NEW — contribute it:")
         print(f"  open:   {prefilled_issue_url(profile)}")
         print(f"  attach: {out}  (drag it into the issue)")
+    return 0
+
+
+async def _fixtures_cli(args: argparse.Namespace, password: str, on_progress: ProgressFn) -> int:
+    """Capture read-only raw responses and write a sanitized fixture set (see --fixtures-out)."""
+    try:
+        raw = await capture_raw(
+            args.ip, args.username, password, ssh=not args.no_ssh, on_progress=on_progress
+        )
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        print(f"fixture capture failed: {exc}", file=sys.stderr)
+        return 1
+
+    target = write_fixture_set(raw, Path(args.fixtures_out))
+    method_count = len(list(target.glob("*.json"))) - 1  # exclude manifest.json
+    print(f"\nFixtures ({method_count} methods): {target}")
+    print("Sanitized locally — review the output before committing it, then PR into the")
+    print("library's tests/fixtures/ (see README: Contributing fixtures).")
     return 0

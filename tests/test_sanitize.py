@@ -4,7 +4,9 @@
 import json
 import re
 
-from glinet4_profiler.sanitize import project_report
+import pytest
+
+from glinet4_profiler.sanitize import FixtureSanitizer, project_report, ruleset_hash
 
 RAW = {
     "device": {
@@ -77,3 +79,212 @@ def test_drops_identifiers_and_values():
     blob = json.dumps(out)
     assert "SECRET123" not in blob and "SECRET456" not in blob
     assert not re.search(r"(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}", blob)
+
+
+# ── FixtureSanitizer: raw-response fixtures for the library's golden tests ─────────────────
+# Unlike project_report() (which drops every response value), fixtures keep the response
+# VALUES — that's the point — so each rule below is exercised with a realistic payload shape
+# taken from real GL.iNet RPC responses (clients.get_list is keyed by client MAC; wifi.get_config
+# carries ssid/key; system.get_info nests board_info.hostname; wan status carries a public IP).
+
+CLIENTS_RAW = {
+    "94:83:C4:AA:BB:01": {
+        "mac": "94:83:C4:AA:BB:01",
+        "name": "Shaunes-iPhone",
+        "ip": "192.168.8.101",
+        "online": True,
+    },
+    "94:83:C4:AA:BB:02": {
+        "mac": "94:83:C4:AA:BB:02",
+        "name": "",
+        "ip": "192.168.8.102",
+        "online": False,
+    },
+}
+
+WIFI_RAW = {
+    "2g": {
+        "ssid": "The Cclles Household",
+        "key": "sup3rSecretPass!",
+        "enabled": True,
+        "encryption": "psk2",
+    },
+}
+
+SYSINFO_RAW = {
+    "mac": "94:83:C4:AA:BB:CC",
+    "sn": "SN0001234",
+    "board_info": {"hostname": "GL-MT6000-abcd"},
+    "wifi_password": "hunter2",
+}
+
+WAN_RAW = {
+    "ipv4": {
+        "ip": "51.68.44.10/21",
+        "gateway": "51.68.44.1",
+        "dns": ["8.8.8.8", "8.8.4.4"],
+    },
+}
+
+
+def test_pseudonymizes_macs_consistently_within_a_set():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(CLIENTS_RAW)
+    fake_keys = list(clean.keys())
+    assert set(fake_keys).isdisjoint({"94:83:C4:AA:BB:01", "94:83:C4:AA:BB:02"})
+    assert len(set(fake_keys)) == 2  # two distinct real MACs -> two distinct fake MACs
+    # the dict KEY (clients.get_list is keyed by MAC) and the nested "mac" FIELD are the same
+    # real MAC, so they must land on the same fake MAC (cross-field identity within one payload)
+    for fake_key, rec in clean.items():
+        assert rec["mac"] == fake_key
+
+
+def test_mac_pseudonym_is_stable_across_separate_payloads():
+    sanitizer = FixtureSanitizer()
+    a = sanitizer.sanitize({"mac": "94:83:C4:AA:BB:01"})
+    b = sanitizer.sanitize({"lan_mac": "94:83:C4:AA:BB:01"})
+    assert a["mac"] == b["lan_mac"]  # same real MAC, two different methods -> same fake MAC
+    c = sanitizer.sanitize({"mac": "94:83:C4:AA:BB:02"})
+    assert c["mac"] != a["mac"]
+
+
+def test_fake_mac_is_locally_administered_and_never_the_real_value():
+    sanitizer = FixtureSanitizer()
+    fake = sanitizer.sanitize({"mac": "94:83:C4:AA:BB:CC"})["mac"]
+    assert re.match(r"^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$", fake)
+    assert fake != "94:83:C4:AA:BB:CC"
+    first_octet = int(fake.split(":")[0], 16)
+    assert first_octet & 0b10 == 0b10  # U/L bit set: guaranteed not a real assigned OUI
+
+
+def test_ssid_tokenized_consistently():
+    sanitizer = FixtureSanitizer()
+    a = sanitizer.sanitize({"ssid": "The Cclles Household"})
+    b = sanitizer.sanitize({"ssid": "The Cclles Household"})  # same SSID again -> same token
+    c = sanitizer.sanitize({"ssid": "Guest WiFi"})
+    assert a["ssid"] == b["ssid"]
+    assert re.match(r"^ssid-\d+$", a["ssid"])
+    assert a["ssid"] != c["ssid"]
+    assert "Cclles" not in json.dumps(a)
+
+
+def test_hostname_and_name_fields_share_the_host_token_space():
+    sanitizer = FixtureSanitizer()
+    board = sanitizer.sanitize({"board_info": {"hostname": "GL-MT6000-abcd"}})
+    client = sanitizer.sanitize({"name": "GL-MT6000-abcd"})  # same value, sibling key -> same token
+    assert board["board_info"]["hostname"] == client["name"]
+    assert re.match(r"^host-\d+$", client["name"])
+    assert "GL-MT6000-abcd" not in json.dumps([board, client])
+
+
+def test_empty_name_is_left_alone_not_tokenized():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"name": ""})
+    assert clean == {"name": ""}
+
+
+def test_secret_keyed_fields_are_nulled_not_stringified():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {
+            "sn": "SN0001234",
+            "wifi_password": "hunter2",
+            "key": "abc",
+            "token": "xyz",
+            "nonce": "n1",
+            "salt": "s1",
+        }
+    )
+    assert clean == {
+        "sn": None,
+        "wifi_password": None,
+        "key": None,
+        "token": None,
+        "nonce": None,
+        "salt": None,
+    }
+
+
+def test_secret_key_nulls_nested_values_too():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"peers": [{"name": "p", "preshared_key": "x"}]})
+    assert clean["peers"][0]["name"] != "p"  # "name" is a host-token key, not left verbatim either
+    assert clean["peers"][0]["preshared_key"] is None
+
+
+def test_public_ipv4_replaced_with_documentation_range_consistently():
+    sanitizer = FixtureSanitizer()
+    a = sanitizer.sanitize({"gateway": "51.68.44.1"})
+    b = sanitizer.sanitize({"dns": ["51.68.44.1", "8.8.8.8"]})
+    assert a["gateway"] == b["dns"][0]  # same real public IP everywhere -> same fake IP
+    assert a["gateway"].startswith(("192.0.2.", "198.51.100.", "203.0.113."))
+    assert b["dns"][1] != "8.8.8.8"
+
+
+def test_ipv4_cidr_suffix_is_preserved():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"ip": "51.68.44.10/21"})
+    addr, sep, suffix = clean["ip"].partition("/")
+    assert sep == "/" and suffix == "21"
+    assert addr != "51.68.44.10"
+
+
+def test_lan_ipv4_kept_verbatim():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"ip": "192.168.8.101", "gw": "10.0.0.1", "vpn": "172.16.5.5"})
+    assert clean == {"ip": "192.168.8.101", "gw": "10.0.0.1", "vpn": "172.16.5.5"}
+
+
+def test_ipv6_public_replaced_private_kept():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"wan6": "2606:4700:4700::1111", "lan6": "fc00::1", "ll6": "fe80::1"}
+    )
+    assert clean["wan6"].startswith("2001:db8:")
+    assert clean["wan6"] != "2606:4700:4700::1111"
+    assert clean["lan6"] == "fc00::1"
+    assert clean["ll6"] == "fe80::1"
+
+
+@pytest.mark.parametrize("value", [3, True, False, None, "ap", "psk2", 0.5], ids=repr)
+def test_scalars_and_enum_strings_pass_through_unchanged(value):
+    sanitizer = FixtureSanitizer()
+    assert sanitizer.sanitize({"field": value}) == {"field": value}
+
+
+def test_realistic_multi_method_capture_leaks_nothing_but_keeps_topology():
+    sanitizer = FixtureSanitizer()
+    clean_clients = sanitizer.sanitize(CLIENTS_RAW)
+    clean_wifi = sanitizer.sanitize(WIFI_RAW)
+    clean_sysinfo = sanitizer.sanitize(SYSINFO_RAW)
+    clean_wan = sanitizer.sanitize(WAN_RAW)
+    blob = json.dumps([clean_clients, clean_wifi, clean_sysinfo, clean_wan])
+    for secret in (
+        "94:83:C4",
+        "sup3rSecretPass",
+        "hunter2",
+        "SN0001234",
+        "GL-MT6000-abcd",
+        "51.68.44.10",
+        "8.8.8.8",
+        "Cclles",
+    ):
+        assert secret not in blob
+    # LAN topology and categorical/structural fields are the fixture's actual value — kept
+    assert "192.168.8.101" in blob
+    assert "psk2" in blob
+    assert json.loads(blob)[1]["2g"]["enabled"] is True
+
+
+def test_sanitize_does_not_mutate_input():
+    sanitizer = FixtureSanitizer()
+    src = {"ssid": "Home"}
+    sanitizer.sanitize(src)
+    assert src == {"ssid": "Home"}
+
+
+def test_ruleset_hash_is_deterministic_and_short():
+    first = ruleset_hash()
+    second = ruleset_hash()
+    assert first == second
+    assert re.match(r"^[0-9a-f]{16}$", first)

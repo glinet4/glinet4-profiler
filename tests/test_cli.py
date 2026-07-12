@@ -136,6 +136,71 @@ def test_capture_mode_keep_data_is_local_only(monkeypatch, tmp_path, capsys):
     assert "LOCAL-ONLY" in capsys.readouterr().out
 
 
+def test_fixtures_out_writes_fixture_set_and_skips_profile_flow(monkeypatch, tmp_path, capsys):
+    """--fixtures-out captures raw + writes fixtures; never touches capture()/the registry."""
+    seen = {}
+    capture_called = {"called": False}
+    fetch_called = {"called": False}
+
+    async def fake_capture_raw(ip, username, password, *, ssh=True, on_progress=None):  # noqa: ARG001
+        seen["ssh"] = ssh
+        return {"device": {"model": "mt6000", "firmware_version": "4.9.0"}, "services": {}}
+
+    async def fake_capture(*args, **kwargs):  # noqa: ARG001
+        capture_called["called"] = True
+        raise AssertionError("capture() must not run when --fixtures-out is given")
+
+    async def fake_fetch(url, *, timeout=5.0):  # noqa: ARG001
+        fetch_called["called"] = True
+        return None
+
+    def fake_write_fixture_set(raw, out_dir, **kwargs):  # noqa: ARG001
+        seen["raw"] = raw
+        seen["out_dir"] = out_dir
+        target = out_dir / "mt6000_4.9.0"
+        target.mkdir(parents=True)
+        (target / "system.get_info.json").write_text("{}", encoding="utf-8")
+        (target / "manifest.json").write_text("{}", encoding="utf-8")
+        return target
+
+    monkeypatch.setattr(cli_mod, "capture_raw", fake_capture_raw)
+    monkeypatch.setattr(cli_mod, "capture", fake_capture)
+    monkeypatch.setattr(cli_mod, "fetch_manifest", fake_fetch)
+    monkeypatch.setattr(cli_mod, "write_fixture_set", fake_write_fixture_set)
+
+    out_dir = tmp_path / "fixtures"
+    rc = cli_mod.main(
+        ["192.168.8.1", "--password", "x", "--no-ssh", "--fixtures-out", str(out_dir)]
+    )
+    assert rc == 0
+    assert seen["ssh"] is False
+    assert seen["out_dir"] == out_dir
+    assert not capture_called["called"]  # the profile-shape capture never ran
+    assert not fetch_called["called"]  # no registry lookup for a fixture-only run
+    stdout = capsys.readouterr().out
+    assert "Fixtures (1 methods)" in stdout
+    assert str(out_dir / "mt6000_4.9.0") in stdout
+
+
+def test_fixtures_out_reports_failure(monkeypatch, tmp_path, capsys):
+    async def fake_capture_raw(ip, username, password, *, ssh=True, on_progress=None):  # noqa: ARG001
+        raise RuntimeError("router unreachable")
+
+    monkeypatch.setattr(cli_mod, "capture_raw", fake_capture_raw)
+    rc = cli_mod.main(
+        [
+            "192.168.8.1",
+            "--password",
+            "x",
+            "--no-ssh",
+            "--fixtures-out",
+            str(tmp_path / "fixtures"),
+        ]
+    )
+    assert rc == 1
+    assert "fixture capture failed" in capsys.readouterr().err
+
+
 def test_no_ip_starts_web_server(monkeypatch):
     called = {}
     monkeypatch.setattr(cli_mod, "serve", lambda **kwargs: called.update(kwargs))
