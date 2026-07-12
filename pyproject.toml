@@ -5,6 +5,7 @@ description = "Local capture launcher + registry for GL.iNet device API profiles
 keywords = ["glinet", "gl-inet", "openwrt", "router", "api", "openrpc"]
 readme = "README.md"
 license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = ["aiohttp>=3.8.4", "paramiko>=3", "libpass>=1.8"]
 classifiers = [
@@ -30,11 +31,8 @@ Changelog = "https://github.com/glinet4/glinet4-profiler/blob/main/CHANGELOG.md"
 glinet4-profiler = "glinet4_profiler.cli:main"
 
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/glinet4_profiler"]
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
