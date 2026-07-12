@@ -1,4 +1,4 @@
-"""glinet-profiler console entry point (web UI, or a one-shot CLI capture)."""
+"""glinet4-profiler console entry point (web UI, or a one-shot CLI capture)."""
 
 import argparse
 import asyncio
@@ -18,7 +18,7 @@ from .submit import prefilled_issue_url
 def main(argv: list[str] | None = None) -> int:
     """Start the web launcher, or run a one-shot capture when a router IP is given."""
     parser = argparse.ArgumentParser(
-        prog="glinet-profiler", description="Capture a GL.iNet device's API surface."
+        prog="glinet4-profiler", description="Capture a GL.iNet device's API surface."
     )
     parser.add_argument(
         "ip", nargs="?", help="router IP/host — run a one-shot capture (omit to start the web UI)"

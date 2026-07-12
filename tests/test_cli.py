@@ -1,4 +1,4 @@
-"""CLI tests for glinet-profiler (capture mode + server-mode dispatch)."""
+"""CLI tests for glinet4-profiler (capture mode + server-mode dispatch)."""
 # pylint: disable=missing-function-docstring,redefined-outer-name,unused-argument
 
 import glinet4_profiler.cli as cli_mod
