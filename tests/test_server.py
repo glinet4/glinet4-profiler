@@ -82,7 +82,7 @@ async def test_enumerate_streams_progress_then_result(client):
 async def test_index_is_served(client):
     resp = await client.get("/")
     assert resp.status == 200
-    assert "glinet-profiler" in await resp.text()
+    assert "glinet4-profiler" in await resp.text()
 
 
 def test_open_browser_skips_under_wsl(monkeypatch):

@@ -125,7 +125,7 @@ def serve(
     app = make_app(token, registry_url=registry_url)
 
     async def _on_startup(_app: web.Application) -> None:
-        print(f"glinet-profiler is running at:\n  {url}\nPress Ctrl+C to stop.")
+        print(f"glinet4-profiler is running at:\n  {url}\nPress Ctrl+C to stop.")
         if open_browser:
             _open_browser(url)
 

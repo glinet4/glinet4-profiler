@@ -30,7 +30,7 @@ deliberately submit.
 
 ## Quick start
 
-Once published you'll be able to run it with no install:
+Run it with no install:
 
 ```bash
 uvx glinet4-profiler
@@ -93,7 +93,7 @@ project) — there is **no runtime dependency on gli4py** (deps are just
 - **[glinet4](https://github.com/glinet4/glinet4)** — the typed GL.iNet Python
   **client library**. Each captured profile records, per method, whether the
   gli4py client already wraps it ("coverage") — a lens for Python developers.
-- **[glinet-registry](https://github.com/glinet4/glinet4-registry)** — the
+- **[glinet4-registry](https://github.com/glinet4/glinet4-registry)** — the
   public, community registry of device profiles (browse site + submission bot).
   The launcher fetches its manifest to tell you whether a device is already
   known, and **Submit** opens its issue form. It releases independently of this
@@ -114,7 +114,7 @@ replacement for pre-commit) via `.pre-commit-config.yaml`; run
 ## The three repos
 
 - **glinet4-profiler** (this repo) — the capture launcher + enumeration engine.
-- **[glinet-registry](https://github.com/glinet4/glinet4-registry)** — the
+- **[glinet4-registry](https://github.com/glinet4/glinet4-registry)** — the
   device-profile data, browse site, and submission bot.
 - **[glinet4](https://github.com/glinet4/glinet4)** — the GL.iNet Python client
   library (the "coverage" lens shown in each profile).
