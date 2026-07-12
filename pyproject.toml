@@ -1,6 +1,6 @@
 [project]
 name = "glinet4-profiler"
-version = "0.3.0"  # managed by release-please
+version = "0.3.1"  # managed by release-please
 description = "Local capture launcher + registry for GL.iNet device API profiles."
 keywords = ["glinet", "gl-inet", "openwrt", "router", "api", "openrpc"]
 readme = "README.md"
