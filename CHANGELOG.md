@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1](https://github.com/glinet4/glinet4-profiler/compare/glinet-profiler-v0.3.0...glinet-profiler-v0.3.1) (2026-07-12)
+
+
+### Bug Fixes
+
+* **web:** correct capability labels in launcher UI ([0451d9e](https://github.com/glinet4/glinet4-profiler/commit/0451d9e4480559fca15743273682d43ac3edebdf))
+
+
+### Documentation
+
+* theme-aware logo header ([c07b505](https://github.com/glinet4/glinet4-profiler/commit/c07b505c1e2ca7a8c67095c02aaff38c3d17f345))
+
 ## [0.3.0](https://github.com/glinet4/glinet4-profiler/compare/glinet-profiler-v0.2.0...glinet-profiler-v0.3.0) (2026-06-29)
 
 
