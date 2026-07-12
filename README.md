@@ -151,16 +151,57 @@ real API shapes to assert against):
   structural/status field. It's the highest-risk surface in the catalog, so
   it defaults to nothing surviving rather than relying on a rule catching
   every field GL.iNet's firmware might expose.
+- **Any string containing a newline is nulled**, whatever its key. Free text —
+  a custom hosts file, an inline `.ovpn` config with its PEM blocks and
+  provider hostname, a log dump, an AT-command transcript — carries MACs, IPs,
+  hostnames and key material *mid-line*, where a whole-value rule cannot see
+  them. Rather than keep patching the instances, the rule is stated at the
+  level of the class: a newline means free text, and free text is nulled. The
+  key survives with a `null` value, so the response shape is kept. On the
+  reference mt6000/4.9.0 capture this costs exactly two strings
+  (`dns.get_host.content`, `wg-server.get_config.amnezia`), neither of which
+  the library reads.
+- MACs and public IPs are also scrubbed **mid-string**, through the same
+  pseudonym maps as standalone values — so a MAC in a status line and the same
+  MAC in a `clients.get_list` key land on the *same* fake MAC.
 - The `logread` service is **excluded from emission entirely** — its methods
-  (`get_system_log`, `get_kernel_log`, ...) return raw free-text log dumps in
-  which client MACs, hostnames, and IPs appear mid-line, defeating every
-  anchored whole-value sanitizer rule, and a log blob has no golden-test
-  value for the library anyway. No `logread.*.json` file is ever written.
+  (`get_system_log`, `get_kernel_log`, ...) return raw free-text log dumps with
+  no golden-test value. The multi-line rule above would null them anyway; the
+  exclusion is kept as defence in depth (it fails differently: this one is
+  keyed on the service, that one on the value). No `logread.*.json` file is
+  ever written.
 
 Every rule above is unit-tested (`tests/test_sanitize.py`), but **review the
 output before committing it anywhere** — you know your own network better
 than an automated tool does. Once you're happy with it, open a PR against the
 library's `tests/fixtures/` with the new `<model>_<firmware>/` directory.
+
+### What a fixture set still tells someone about you
+
+Sanitization removes credentials and identifiers; it does not make the set
+anonymous. A fixture set is **your device's configuration**, and you are
+attributable — the PR that contributes it has your name on it. Specifically:
+
+- **Port-forwarding rules keep their real ports and LAN targets.** A
+  `firewall.get_port_forward_list` fixture emits the actual external port,
+  protocol and internal destination of every rule you have (the rule's `name`
+  is tokenized, the LAN IP is kept as topology). `32400 → 192.168.8.x` says
+  you run Plex; `22`, `3389` or `8006` say rather more. This is deliberate —
+  the rule shape *is* the golden-test value — but it is a statement about your
+  network, published under your name. **Read the port-forward fixture before
+  you open the PR**, and delete it from the set if you would rather not say.
+- **Dict keys that aren't MACs are not pseudonymized.** MAC-keyed dicts (e.g.
+  `clients.get_list`) have their keys pseudonymized like any other MAC, but a
+  response keyed by *hostname* or *IP* would keep those keys verbatim — only
+  values are tokenized. No GL.iNet method in the reference capture is shaped
+  that way (0 instances), so this is a latent gap rather than a live one; if a
+  future firmware returns a hostname-keyed map, its keys will leak until a
+  rule covers them.
+- **`tzoffset` is kept on purpose.** `zonename`/`timezone` are nulled (a zone
+  name is city-level location), but the numeric UTC offset stays: it is
+  already derivable from the `localtime - timestamp` pair in the same
+  response, which the fixture keeps, so nulling it would cost shape and buy
+  nothing. It narrows you to a longitude band, not a city.
 
 **Caveat on MAC/IP/token pseudonym numbering:** the `-N` suffix each fake
 MAC/IP/SSID/token gets is assigned **positionally** — in the order that real

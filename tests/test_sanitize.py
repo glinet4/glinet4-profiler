@@ -749,6 +749,182 @@ def test_end_point_with_port_still_keeps_port():
 # `assert` (stripped under python -O) ────────────────────────────────────────────────────────
 
 
+# ── Round 3: the free-text CLASS — anchored (full-value) rules pass free text through ───────
+# The previous two rounds patched INSTANCES (logread); a third review proved the same class
+# leaks on device configurations nobody has captured yet: a populated OpenVPN client config
+# (inline PEM + provider hostname), a parental-control blocklist, a custom hosts file. The
+# general rule: any string containing a newline is nulled, anywhere.
+
+# dns.get_host — real captured shape ({"content": "<hosts-file text>"}). On the tested device
+# this is localhost boilerplate; a user who added their own entries gets IP+hostname pairs that
+# every anchored rule passes verbatim (the leak is MID-LINE, exactly like logread's).
+DNS_HOST_CUSTOM_RAW = {
+    "content": (
+        "127.0.0.1 localhost\n"
+        "192.168.8.42 nas.smith-family.lan\n"
+        "192.168.8.43 hass.smith-family.lan\n"
+    )
+}
+
+# ovpn-client.get_config-class shape: an OpenVPN client config is uploaded whole and handed
+# back as one inline blob — the provider's real hostname plus inline PEM material.
+OVPN_CLIENT_CONFIG_RAW = {
+    "group_id": 3,
+    "ovpn_file": (
+        "client\n"
+        "dev tun\n"
+        "remote vpn-provider.example.net 1194 udp\n"
+        "<ca>\n"
+        "-----BEGIN CERTIFICATE-----\n"
+        "MIIB0jCCAXigAwIBAgIJAKm3S5Ry8pEyMAoGCCqGSM49BAMCMEUxCzAJBgNVBAYT\n"
+        "-----END CERTIFICATE-----\n"
+        "</ca>\n"
+        "<key>\n"
+        "-----BEGIN PRIVATE KEY-----\n"
+        "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg2Zk9zRealKeyBytes\n"
+        "-----END PRIVATE KEY-----\n"
+        "</key>\n"
+    ),
+    "enabled": True,
+}
+
+# parental-control / black_white_list-class shape: blocked domains entered as a free-text
+# block. The domains are a household's browsing policy — and no anchored rule sees them.
+BLOCKLIST_CONFIG_RAW = {
+    "mode": 1,
+    "enable": True,
+    "domain_list": "casino-example.com\nsmith-family-intranet.lan\nsome-dating-site.example\n",
+}
+
+# wg-server.get_config.amnezia — real captured shape: a machine-generated AmneziaWG tuning
+# block (Jc/Jmin/Jmax/S1/S2/H1..H4 numeric params), 11 lines. Nulled by the general rule; the
+# library never reads it (grep: zero references in gli4py), so nulling costs golden tests
+# nothing and the key itself survives, preserving the response shape.
+WG_SERVER_CONFIG_RAW = {
+    "enable": True,
+    "port": 51820,
+    "amnezia": "Jc = 4\nJmin = 40\nJmax = 70\nS1 = 15\nS2 = 62\nH1 = 1234567890\nH2 = 987654321\n",
+}
+
+
+def test_multiline_string_is_nulled_under_any_key():
+    # the general rule: a newline means free text, and free text defeats every anchored rule
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"whatever": "line one\nline two"})
+    assert clean == {"whatever": None}
+
+
+def test_single_line_values_are_untouched_by_the_multiline_rule():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"mode": "psk2", "banner": "one line only", "n": 7})
+    assert clean == {"mode": "psk2", "banner": "one line only", "n": 7}
+
+
+def test_custom_hosts_file_content_nulled():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(DNS_HOST_CUSTOM_RAW, service="dns")
+    assert clean == {"content": None}
+    blob = json.dumps(clean)
+    assert "smith-family" not in blob and "192.168.8.42" not in blob
+
+
+def test_inline_ovpn_config_with_pem_nulled_shape_survives():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(OVPN_CLIENT_CONFIG_RAW, service="ovpn-client")
+    assert clean["ovpn_file"] is None
+    assert clean["group_id"] == 3 and clean["enabled"] is True  # shape survives
+    blob = json.dumps(clean)
+    for secret in ("vpn-provider.example.net", "BEGIN CERTIFICATE", "BEGIN PRIVATE KEY", "MIIB"):
+        assert secret not in blob
+
+
+def test_blocklist_free_text_domains_nulled():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(BLOCKLIST_CONFIG_RAW, service="parental-control")
+    assert clean["domain_list"] is None
+    assert clean["mode"] == 1 and clean["enable"] is True
+    assert "casino-example.com" not in json.dumps(clean)
+
+
+def test_amnezia_tuning_block_nulled_key_survives():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(WG_SERVER_CONFIG_RAW, service="wg-server")
+    assert "amnezia" in clean and clean["amnezia"] is None  # key kept: response shape intact
+    assert clean["port"] == 51820
+
+
+def test_multiline_rule_covers_log_blobs_even_without_the_service_exclusion():
+    # belt-and-braces: fixtures.py still excludes logread outright, but a log blob reaching the
+    # sanitizer by any other route (a "log" field on a non-log service, diag output, AT dumps)
+    # is nulled by the general rule rather than passing verbatim.
+    sanitizer = FixtureSanitizer()
+    log = (
+        "[   12.345678] ra0: STA 94:83:c4:aa:bb:01 IEEE 802.11: associated\n"
+        "[   99.000001] dnsmasq-dhcp: DHCPACK(br-lan) 192.168.8.101 Shaunes-iPhone\n"
+    )
+    clean = sanitizer.sanitize({"log": log}, service="ovpn-server")
+    assert clean == {"log": None}
+    assert "94:83:c4" not in json.dumps(clean)
+
+
+# ── Round 3, Fix 2: identifiers are scrubbed MID-STRING (parity with enumerator.redact) ─────
+# redact._MAC_VALUE is deliberately unanchored ("device identifier; scrub anywhere") and
+# substitutes mid-string; FixtureSanitizer's full-value match was a regression against it.
+
+
+def test_mid_string_mac_and_public_ip_are_scrubbed():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"info": "client 94:83:c4:11:22:33 joined from 8.8.8.8"})
+    assert "94:83:c4:11:22:33" not in clean["info"]
+    assert "8.8.8.8" not in clean["info"]
+    assert "02:00:00:" in clean["info"]  # pseudonymized, not blanked: the shape stays readable
+    assert re.search(r"(?:192\.0\.2\.|198\.51\.100\.|203\.0\.113\.)\d+", clean["info"])
+    assert clean["info"].startswith("client ") and "joined from" in clean["info"]
+
+
+def test_mid_string_mac_shares_the_pseudonym_of_the_standalone_mac():
+    sanitizer = FixtureSanitizer()
+    standalone = sanitizer.sanitize({"mac": "94:83:c4:11:22:33"})
+    mid = sanitizer.sanitize({"info": "client 94:83:c4:11:22:33 joined"})
+    assert standalone["mac"] in mid["info"]  # SAME fake MAC: one shared pseudonym map
+
+
+def test_mid_string_public_ip_shares_the_pseudonym_of_the_standalone_ip():
+    sanitizer = FixtureSanitizer()
+    standalone = sanitizer.sanitize({"gateway": "51.68.44.10"})
+    mid = sanitizer.sanitize({"info": "route via 51.68.44.10 dev wan"})
+    assert standalone["gateway"] in mid["info"]
+
+
+def test_mac_pseudonym_is_case_insensitive():
+    # a real capture spells the same MAC both ways (upper in system.get_info, lower in the
+    # clients dict); two spellings of ONE physical device must not become two fake devices.
+    sanitizer = FixtureSanitizer()
+    upper = sanitizer.sanitize({"mac": "94:83:C4:AA:BB:01"})
+    lower = sanitizer.sanitize({"mac": "94:83:c4:aa:bb:01"})
+    assert upper["mac"] == lower["mac"]
+
+
+def test_mid_string_private_ip_and_lan_topology_kept():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"info": "lease 192.168.8.101 from 192.168.8.1"})
+    assert clean["info"] == "lease 192.168.8.101 from 192.168.8.1"
+
+
+def test_mid_string_public_ipv6_scrubbed_fake_mac_not_mistaken_for_one():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"info": "peer 94:83:c4:11:22:33 via 2606:4700:4700::1111"})
+    assert "2606:4700:4700::1111" not in clean["info"]
+    assert "2001:db8:" in clean["info"]
+    assert "02:00:00:" in clean["info"]  # the substituted fake MAC survives the IPv6 pass intact
+
+
+def test_version_and_time_strings_are_not_mangled_by_the_mid_string_scrub():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"fw": "GL-MT6000 v4.9.0", "at": "10:22:31", "t": "8:30"})
+    assert clean == {"fw": "GL-MT6000 v4.9.0", "at": "10:22:31", "t": "8:30"}
+
+
 def test_personal_field_guard_raises_on_uncovered_key():
     from glinet4_profiler import sanitize as sanitize_module
     from glinet4_profiler.enumerator import signature

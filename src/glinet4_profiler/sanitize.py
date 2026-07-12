@@ -74,9 +74,40 @@ def project_report(
 # response bodies carry things (client MACs, SSIDs, WAN IPs, DHCP hostnames) the value-stripped
 # registry flow never had to consider.
 
-FIXTURE_SANITIZER_VERSION = 3  # bump on any behavioral change to a rule below
+FIXTURE_SANITIZER_VERSION = 4  # bump on any behavioral change to a rule below
 
-_MAC = re.compile(r"^(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}$")
+# ── The free-text class ───────────────────────────────────────────────────────────────────────
+# Every rule below except this one is ANCHORED: it inspects a whole value (or its key) and
+# either replaces it or passes it through verbatim. That design has one structural blind spot —
+# free text. A hosts file, an inline .ovpn config, a log dump, or an AT-command transcript
+# carries MACs/IPs/hostnames/PEM material MID-LINE, where no whole-value rule can see them, so
+# the whole blob passes untouched. Three rounds of security review each found new INSTANCES of
+# this class (logread, then dns.get_host, then populated ovpn/parental-control configs), so the
+# rule is now stated at the level of the class instead: a newline means free text, and free text
+# is nulled. No key-name exceptions — an exception list would be exactly the "trust the key"
+# pattern that produced the blind spot in the first place.
+#
+# Cost on the real mt6000/4.9.0 capture: exactly two strings, neither of any golden-test value
+# (the glinet4 library references neither: `grep -rn 'amnezia\|get_host'` finds nothing).
+#   * dns.get_host.content       — localhost boilerplate on the tested device (a customized
+#                                  hosts file on an untested one is the leak this closes).
+#   * wg-server.get_config.amnezia — machine-generated AmneziaWG tuning params (Jc/S1/H1..H4).
+# Both keys survive with a `None` value, so the response SHAPE is preserved either way.
+_MULTILINE = "\n"
+
+# Unanchored identifier scrub (parity with ``enumerator.redact._MAC_VALUE``, which is
+# deliberately unanchored — "device identifier; scrub anywhere"). Anchored full-value matching
+# was a regression against the registry flow's own floor: a MAC or public IP embedded in a
+# single-line string (an error message, a status line, a route description) passed verbatim.
+# Substitution runs through the SAME pseudonym maps as the standalone rules, so a MAC seen both
+# standalone and mid-string lands on ONE fake MAC — cross-payload identity is preserved, not
+# broken, by scrubbing mid-string.
+_MAC_TEXT = re.compile(r"(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}")
+_IPV4_TEXT = re.compile(r"(?<![\w.])\d{1,3}(?:\.\d{1,3}){3}(?![\w.])")
+# Loose candidate shape (hex + colons, at least one colon); every match is validated by
+# ``ipaddress`` before substitution, so MAC-shaped runs (6 groups — including the 02:00:00:*
+# fakes the MAC pass just wrote) and HH:MM:SS times fail to parse and are left untouched.
+_IPV6_TEXT = re.compile(r"(?<![\w:.])(?=[0-9A-Fa-f]*:)[0-9A-Fa-f:]{2,45}(?![\w:.])")
 # Locally-administered, unicast prefix (U/L bit set on the first octet — 0x02) — by construction
 # this can never collide with a real IEEE-assigned OUI, unlike a vendor-looking prefix.
 _MAC_FAKE_PREFIX = "02:00:00"
@@ -282,7 +313,7 @@ class FixtureSanitizer:
         if isinstance(value, dict):
             out: dict[str, Any] = {}
             for k, v in value.items():
-                new_key = self._mac(k) if _MAC.match(k) else k
+                new_key = self._mac(k) if _MAC_TEXT.fullmatch(k) else k
                 out[new_key] = (
                     None if _dict_key_forces_null(k, service) else self.sanitize(v, k, service)
                 )
@@ -302,7 +333,9 @@ class FixtureSanitizer:
 
     def _sanitize_str(self, value: str, key: str | None, service: str | None) -> str | None:
         # pylint: disable=too-many-return-statements
-        if _MAC.match(value):
+        if _MULTILINE in value:
+            return None  # free-text class: no anchored rule can see inside a blob — null it
+        if _MAC_TEXT.fullmatch(value):
             return self._mac(value)
         ip_out = self._sanitize_ip(value)
         if ip_out is not None:
@@ -325,7 +358,26 @@ class FixtureSanitizer:
                 return self._token(value, self._hosts, "host")
         if len(value) >= 64 and OPAQUE_BLOB.match(value):
             return None  # high-entropy blob backstop, regardless of key name
-        return value
+        # Everything above matched a whole value. What's left is a single-line string that no
+        # anchored rule claimed — which is exactly where an embedded MAC/public IP hides.
+        return self._scrub_identifiers(value)
+
+    def _scrub_identifiers(self, value: str) -> str:
+        """Substitute MACs and public IPs *inside* a free-form string, through the shared maps.
+
+        Order matters: MACs are replaced first, so the ``02:00:00:*`` fakes they leave behind are
+        present when the IPv6 pass runs — and are rejected by it (6 hex groups, no ``::``, so
+        ``ipaddress`` refuses them), rather than being mangled a second time.
+        """
+        if ":" not in value and "." not in value:
+            return value  # no separator: cannot contain a MAC or an IP
+        out = _MAC_TEXT.sub(lambda m: self._mac(m.group()), value)
+        out = _IPV4_TEXT.sub(self._scrub_ip_match, out)
+        return _IPV6_TEXT.sub(self._scrub_ip_match, out)
+
+    def _scrub_ip_match(self, match: re.Match[str]) -> str:
+        """Replace one regex hit if it really is a public IP; leave every other candidate alone."""
+        return self._sanitize_ip(match.group()) or match.group()
 
     def _sanitize_host_port(self, value: str) -> str | None:
         """Sanitize a ``host:port`` / ``[v6]:port`` compound (e.g. WireGuard ``end_point``).
@@ -364,9 +416,14 @@ class FixtureSanitizer:
         return f"{fake}{sep}{suffix}" if sep else fake
 
     def _mac(self, value: str) -> str:
-        if value not in self._macs:
-            self._macs[value] = _fake_mac(len(self._macs) + 1)
-        return self._macs[value]
+        # Keyed case-insensitively (and separator-insensitively): a real capture spells the same
+        # MAC both ways — upper in ``system.get_info``, lower in the ``clients.get_list`` keys —
+        # and one physical device must never become two fake devices, which is precisely the
+        # cross-payload identity the shared map exists to preserve.
+        real = value.lower().replace("-", ":")
+        if real not in self._macs:
+            self._macs[real] = _fake_mac(len(self._macs) + 1)
+        return self._macs[real]
 
     def _ip(self, addr: ipaddress.IPv4Address | ipaddress.IPv6Address) -> str:
         mapping = self._ipv4 if isinstance(addr, ipaddress.IPv4Address) else self._ipv6
@@ -408,6 +465,10 @@ def ruleset_hash() -> str:
             "cellular_strict_whitelist": _CELLULAR_STRICT_WHITELIST,
             "mac_fake_prefix": _MAC_FAKE_PREFIX,
             "ipv4_doc_ranges": _IPV4_DOC_RANGES,
+            # Policy markers, not key lists: flipping either rule must change the hash even if
+            # no key set moved (both are key-agnostic by design — that is the point of them).
+            "multiline_strings": "null",
+            "identifier_scrub": "mid_string",
         },
         sort_keys=True,
     )

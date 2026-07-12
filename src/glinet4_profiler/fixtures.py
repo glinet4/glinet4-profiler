@@ -29,12 +29,19 @@ from .sanitize import FIXTURE_SANITIZER_VERSION, FixtureSanitizer, ruleset_hash
 _PACKAGE_NAME = "glinet4-profiler"
 
 # Services whose read methods return raw free-text log dumps (``{"log": "<blob>"}``) rather
-# than structured state. Free-running log text defeats every anchored, whole-value sanitizer
-# rule — client MACs, hostnames, and IPs appear MID-LINE and pass verbatim (a security review
-# extracted 22 real client MACs from a real capture's ``logread.get_kernel_log``) — and a log
-# blob has near-zero golden-test value for the library anyway, so these services never emit
-# fixtures at all. ``logread`` (get_uboot_log / get_system_log / get_kernel_log / get_crash_log
-# / get_config) is the only such service in the catalog today.
+# than structured state. A log blob has near-zero golden-test value for the library, so these
+# services never emit fixtures at all — no file, no bytes, nothing to review.
+#
+# This is now BELT-AND-BRACES, deliberately kept: ``sanitize.FixtureSanitizer`` nulls every
+# multi-line string outright (the free-text class — see the header comment on that rule), so a
+# log blob reaching the sanitizer by any route is already destroyed. The exclusion survives
+# because defence in depth here is nearly free and the two mechanisms fail differently: this one
+# is keyed on the SERVICE (no blob is ever selected), the sanitizer's on the VALUE (any blob that
+# is selected is nulled). A single-line log line, or a log-shaped payload under a service name
+# nobody predicted, is caught by whichever of the two the other misses.
+#
+# ``logread`` (get_uboot_log / get_system_log / get_kernel_log / get_crash_log / get_config) is
+# the only such service in the catalog today.
 _LOG_BLOB_SERVICES = frozenset({"logread"})
 
 
