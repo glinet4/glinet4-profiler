@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/glinet4/glinet4-profiler/compare/glinet-profiler-v0.3.1...glinet-profiler-v0.4.0) (2026-07-13)
+
+
+### Features
+
+* emit sanitized raw-response fixtures for library golden tests ([#10](https://github.com/glinet4/glinet4-profiler/issues/10)) ([1028901](https://github.com/glinet4/glinet4-profiler/commit/1028901d09eebb7bafba6972730b509e55399251))
+
 ## [0.3.1](https://github.com/glinet4/glinet4-profiler/compare/glinet-profiler-v0.3.0...glinet-profiler-v0.3.1) (2026-07-12)
 
 
