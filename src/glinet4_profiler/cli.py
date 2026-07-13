@@ -48,6 +48,13 @@ def main(argv: list[str] | None = None) -> int:
         "The result carries response data, so it is LOCAL-ONLY and not registry-publishable.",
     )
     parser.add_argument(
+        "--ubus",
+        action="store_true",
+        help="also probe the stock-OpenWrt /ubus endpoint (:8080/:8443) for the ubus schema "
+        "(list *) and a sanitized UCI config-state dump, under a top-level 'ubus' key. "
+        "Read-only; needs the admin password; skipped if the port is closed.",
+    )
+    parser.add_argument(
         "--output", "-o", help="write the profile JSON here (default: <id>.json in the cwd)"
     )
     parser.add_argument(
@@ -101,6 +108,7 @@ async def _capture_cli(args: argparse.Namespace) -> int:
             dangerous=dangerous,
             include_destructive=args.include_destructive,
             keep_data=args.keep_data,
+            ubus=args.ubus,
             on_progress=_progress,
         )
     except Exception as exc:  # pylint: disable=broad-exception-caught

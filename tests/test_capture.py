@@ -259,3 +259,59 @@ async def test_rpc_post_does_not_retry_a_real_answer():
     out = await _rpc_post(sess, "http://x/rpc", {}, backoff=0)
     assert out["error"]["code"] == -32601  # a JSON-RPC error is a real reply, not a worker shortage
     assert sess.calls == 1
+
+
+# ── ubus block wiring (capture(ubus=True)) ──────────────────────────────────────
+
+
+async def _fake_enum_returns_raw(*_a, **_k):
+    return RAW
+
+
+async def test_capture_attaches_sanitized_ubus_block(monkeypatch):
+    import glinet4_profiler.ubus as ubus_mod
+
+    monkeypatch.setattr(capture_mod, "_enumerate", _fake_enum_returns_raw)
+
+    async def fake_capture_ubus(host, username, password, **_k):  # noqa: ARG001
+        return {
+            "endpoint": "http:8080",
+            "schema": {"system": {"board": {}}},
+            "uci": {
+                "wireless": {"if0": {".type": "wifi-iface", "ssid": "MyHome", "key": "topsecret"}}
+            },
+        }
+
+    monkeypatch.setattr(ubus_mod, "capture_ubus", fake_capture_ubus)
+    profile = await capture("http://192.168.8.1", "root", "pw", ubus=True)
+    assert profile["ubus"]["schema"] == {"system": {"board": {}}}
+    iface = profile["ubus"]["uci"]["wireless"]["if0"]
+    assert iface["key"] is None  # PSK scrubbed by sanitize_ubus
+    assert iface["ssid"] != "MyHome"  # SSID pseudonymized
+    assert "topsecret" not in json.dumps(profile)  # secret nowhere in the profile
+
+
+async def test_capture_omits_ubus_block_when_unreachable(monkeypatch):
+    import glinet4_profiler.ubus as ubus_mod
+
+    monkeypatch.setattr(capture_mod, "_enumerate", _fake_enum_returns_raw)
+
+    async def fake_none(*_a, **_k):
+        return None
+
+    monkeypatch.setattr(ubus_mod, "capture_ubus", fake_none)
+    profile = await capture("http://192.168.8.1", "root", "pw", ubus=True)
+    assert "ubus" not in profile
+
+
+async def test_capture_does_not_probe_ubus_by_default(monkeypatch):
+    import glinet4_profiler.ubus as ubus_mod
+
+    monkeypatch.setattr(capture_mod, "_enumerate", _fake_enum_returns_raw)
+
+    async def boom(*_a, **_k):
+        raise AssertionError("capture_ubus must not be called unless ubus=True")
+
+    monkeypatch.setattr(ubus_mod, "capture_ubus", boom)
+    profile = await capture("http://192.168.8.1", "root", "pw")
+    assert "ubus" not in profile

@@ -73,6 +73,23 @@ registry's validator independently rejects any MAC, serial, or raw value.)
 Enumeration is strictly **read-only** (a built-in catalog tier, plus an optional
 SSH read tier if you tick the box and have SSH access).
 
+### `--ubus`: the stock-OpenWrt ubus surface (optional)
+
+`--ubus` additionally probes the standard OpenWrt `/ubus` endpoint (uhttpd on
+`:8080`/`:8443`), which is **separate** from GL.iNet's `/rpc` and gated by rpcd's
+own ACLs — so it reaches only stock objects (no GL.iNet cellular/SMS/DPI/clients),
+never a capability GL.iNet's own API doesn't. It adds a top-level `ubus` block with
+two read-only things:
+
+- **`schema`** — the unauthenticated `ubus list *` (every object + method + argument
+  type). Value-free signatures; kept verbatim as authoritative API documentation.
+- **`uci`** — a config-state dump (`network`/`wireless`/`firewall`/`dhcp`/`glconfig`),
+  run through the **same sanitizer as the fixtures**: PSKs/keys/passwords nulled,
+  SSIDs/MACs/IPs/hostnames pseudonymized. Read via `uci get` (never `set`).
+
+It needs the admin password and is skipped silently if the port is closed or the
+ubus login is denied. Read-only throughout.
+
 ## Security
 
 - The launcher binds **`127.0.0.1` only** and guards its API with a per-run
