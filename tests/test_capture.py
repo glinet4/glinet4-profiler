@@ -7,7 +7,7 @@ import aiohttp
 import pytest
 
 import glinet4_profiler.capture as capture_mod
-from glinet4_profiler.capture import _base_url, _rpc_post, capture
+from glinet4_profiler.capture import _base_url, _rpc_post, capture, capture_raw
 
 
 def test_base_url_normalizes_bare_ip():
@@ -115,6 +115,84 @@ async def test_capture_forwards_progress(monkeypatch):
     phases = [e["phase"] for e in events]
     assert "probe" in phases  # forwarded from _enumerate
     assert "sanitize" in phases  # emitted by capture() after enumeration
+
+
+async def test_capture_raw_is_read_only_and_bypasses_redaction(monkeypatch):
+    seen = {}
+
+    async def fake_enumerate(
+        host,
+        username,
+        password,
+        *,
+        ssh,
+        dangerous=False,
+        include_destructive=False,
+        on_progress,
+        redact_values=True,
+    ):  # noqa: ARG001
+        seen["dangerous"] = dangerous
+        seen["include_destructive"] = include_destructive
+        seen["redact_values"] = redact_values
+        return RAW
+
+    monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
+    raw = await capture_raw("http://192.168.8.1", "root", "pw")
+    # always read-only, regardless of caller — capture_raw exposes no dangerous/destructive knob
+    assert seen == {"dangerous": False, "include_destructive": False, "redact_values": False}
+    # unlike capture(), the raw device identifiers are NOT stripped — the whole point is that the
+    # caller (fixtures.write_fixture_set) gets real values to sanitize itself
+    assert raw is RAW
+    assert raw["device"]["mac"] == "94:83:C4:AA:BB:CC"
+
+
+async def test_capture_raw_passes_ssh_flag(monkeypatch):
+    seen = {}
+
+    async def fake_enumerate(
+        host,
+        username,
+        password,
+        *,
+        ssh,
+        dangerous=False,
+        include_destructive=False,
+        on_progress,
+        redact_values=True,
+    ):  # noqa: ARG001
+        seen["ssh"] = ssh
+        return RAW
+
+    monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
+    await capture_raw("http://x", "root", "pw", ssh=False)
+    assert seen["ssh"] is False
+
+
+async def test_capture_raw_forwards_progress(monkeypatch):
+    events = []
+
+    async def record(event):
+        events.append(event)
+
+    async def fake_enumerate(
+        host,
+        username,
+        password,
+        *,
+        ssh,
+        dangerous=False,
+        include_destructive=False,
+        on_progress,
+        redact_values=True,
+    ):  # noqa: ARG001
+        await on_progress({"event": "progress", "phase": "probe", "done": 1, "message": "x"})
+        return RAW
+
+    monkeypatch.setattr(capture_mod, "_enumerate", fake_enumerate)
+    await capture_raw("http://x", "root", "pw", on_progress=record)
+    assert [e["phase"] for e in events] == [
+        "probe"
+    ]  # forwarded verbatim; no extra "sanitize" phase
 
 
 class _Resp:

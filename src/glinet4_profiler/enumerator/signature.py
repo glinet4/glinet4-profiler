@@ -19,7 +19,12 @@ _DATETIME = re.compile(r"^\d{4}-\d{2}-\d{2}")  # ISO-8601 date or datetime
 # No ':' in the enum charset — colon-bearing tokens (ip:port, "08:30:00") fall through to <string>
 # rather than being kept as an "enum".
 _ENUM = re.compile(r"^[A-Za-z0-9._-]{1,24}$")
-_PERSONAL = (
+# Personal/free-text field-name vocabulary: keys whose value is an identifier or free text
+# rather than an API-contract enum, so it must be format-labeled instead of kept verbatim.
+# Public (no leading underscore) so other modules — notably sanitize.FixtureSanitizer, which
+# needs the exact same vocabulary to decide tokenize-vs-null for raw fixture values — import
+# this tuple rather than maintaining a second, driftable copy.
+PERSONAL_FIELDS = (
     "ssid",
     "name",
     "hostname",
@@ -46,7 +51,9 @@ _PERSONAL = (
 
 def _key_is_personal(key: str) -> bool:
     low = key.lower()
-    return any(low == t or low.endswith("_" + t) or low.startswith(t + "_") for t in _PERSONAL)
+    return any(
+        low == t or low.endswith("_" + t) or low.startswith(t + "_") for t in PERSONAL_FIELDS
+    )
 
 
 def _label_str(value: str, key: str | None) -> str:  # pylint: disable=too-many-return-statements

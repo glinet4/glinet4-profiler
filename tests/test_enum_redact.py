@@ -1,7 +1,7 @@
 """Unit tests for redaction and schema capture."""
 # pylint: disable=missing-function-docstring,redefined-outer-name
 
-from glinet4_profiler.enumerator.redact import redact
+from glinet4_profiler.enumerator.redact import OPAQUE_BLOB, redact
 
 
 def test_redacts_secret_keys():
@@ -52,3 +52,18 @@ def test_does_not_mutate_input():
     src = {"key": "s3cret"}
     redact(src)
     assert src["key"] == "s3cret"
+
+
+def test_certificate_key_is_secret():
+    # "cert" already matched; "certificate" (no shared boundary with "cert") did not — closed as
+    # part of the sanitizer-gaps security review.
+    out = redact({"certificate": "MIIB...", "certificate_chain": "MIIC...", "ssid": "Home"})
+    assert out["certificate"] == "<redacted>"
+    assert out["certificate_chain"] == "<redacted>"
+    assert out["ssid"] == "Home"
+
+
+def test_opaque_blob_matcher_is_exported_for_reuse():
+    # sanitize.FixtureSanitizer reuses this exact heuristic as a key-name-agnostic backstop.
+    assert OPAQUE_BLOB.match("A1b2" * 20)
+    assert not OPAQUE_BLOB.match("has spaces in it")

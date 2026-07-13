@@ -1,7 +1,7 @@
 """Tests for the Balanced rich-schema distiller."""
 # pylint: disable=missing-function-docstring
 
-from glinet4_profiler.enumerator.signature import signature_of
+from glinet4_profiler.enumerator.signature import PERSONAL_FIELDS, signature_of
 
 
 def test_keeps_numbers_bools_null():
@@ -61,3 +61,13 @@ def test_time_of_day_is_datetime_not_ipv6():
     assert signature_of({"t": "8:30"}) == {"t": "<datetime>"}
     # a genuine IPv6 (hex / ::) is still labeled correctly
     assert signature_of({"v6": "fe80::1"}) == {"v6": "<ipv6>"}
+
+
+def test_personal_fields_is_publicly_exported_for_reuse():
+    # sanitize.FixtureSanitizer imports this tuple rather than copying it — single source of
+    # truth for "which keys are personal/free-text" across the enumerator and the fixture
+    # sanitizer (see docs/superpowers/sdd/task-1-report.md "Fix: sanitizer gaps").
+    assert "ssid" in PERSONAL_FIELDS
+    assert "endpoint" in PERSONAL_FIELDS
+    assert "peer" in PERSONAL_FIELDS
+    assert "addr" in PERSONAL_FIELDS

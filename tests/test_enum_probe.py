@@ -30,6 +30,24 @@ async def test_enumerate_marks_available_absent_and_redacts():
     assert ("system", "reboot") not in by
 
 
+async def test_redact_values_false_keeps_raw_values_for_fixture_capture():
+    # the seam fixtures.py relies on: with redact_values=False, MACs/secrets survive verbatim in
+    # MethodReport.value so a fixture-specific sanitizer (not this blanket redact()) can see them.
+    responses = {
+        ("system", "get_info"): {"result": {"model": "mt6000", "firmware_version": "4.8.0"}},
+        ("wg-server", "get_config"): {"result": {"port": 51820, "private_key": "SECRET"}},
+    }
+    report = await enumerate_device(
+        make_caller(responses),
+        device_info={"model": "mt6000", "firmware_version": "4.8.0"},
+        redact_values=False,
+    )
+    by = {(m.service, m.method): m for m in report.methods}
+    assert by[("wg-server", "get_config")].value == {"port": 51820, "private_key": "SECRET"}
+    # the signature (published API shape) is unaffected either way — it never carries raw values
+    assert by[("wg-server", "get_config")].signature == {"port": 51820, "private_key": "<secret>"}
+
+
 async def test_only_read_methods_are_probed():
     seen = []
 

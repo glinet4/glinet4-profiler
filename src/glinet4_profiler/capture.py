@@ -75,11 +75,18 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
     dangerous: bool,
     include_destructive: bool,
     on_progress: ProgressFn,
+    redact_values: bool = True,
 ) -> dict[str, Any]:
     """Run the enumeration and return the raw report dict (performs I/O).
 
     Read-only by default; ``dangerous`` calls write endpoints and ``include_destructive``
     calls destructive ones (see ``capture``).
+
+    ``redact_values`` (default True) is forwarded to ``enumerate_device``: it applies the
+    enumerator's built-in secret-only redaction (passwords/keys/tokens nulled, MAC addresses
+    blanket-replaced with a fixed ``<redacted>`` string) before a value ever lands in the
+    returned dict. ``capture_raw`` passes ``False`` to get truly raw values for fixture
+    sanitization, which needs to see real MACs in order to pseudonymize them *consistently*.
     """
     from .enumerator.probe import (
         enumerate_device,  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
@@ -184,6 +191,7 @@ async def _enumerate(  # pylint: disable=too-many-locals,too-many-arguments
             probe_writes=dangerous,
             include_destructive=include_destructive,
             concurrency=concurrency,
+            redact_values=redact_values,
         )
         raw: dict[str, Any] = json.loads(to_json(report))
         return raw
@@ -225,3 +233,42 @@ async def capture(
     )
     await progress({"event": "progress", "phase": "sanitize", "message": "Sanitizing profile…"})
     return project_report(raw, device_id(raw.get("device", {})), keep_data=keep_data)
+
+
+async def capture_raw(
+    host: str,
+    username: str,
+    password: str,
+    *,
+    ssh: bool = True,
+    on_progress: ProgressFn | None = None,
+) -> dict[str, Any]:
+    """Enumerate read-only methods and return the RAW per-device report, for fixture sanitization.
+
+    Always read-only: this always passes ``dangerous=False, include_destructive=False`` to
+    ``_enumerate`` — ``is_read_method``/``risk_of`` (see ``enumerator.catalog``) gate exactly
+    which (service, method) pairs are ever HTTP-called, the same gating ``capture()`` relies on.
+    No write or destructive endpoint is called.
+
+    Unlike ``capture()``, this bypasses the enumerator's built-in secret-only redaction
+    (``redact_values=False``): that redaction blanket-replaces every MAC address with a fixed
+    ``<redacted>`` string, which destroys the information needed to pseudonymize MACs
+    *consistently* (same real MAC -> same fake MAC everywhere in a fixture set). Nothing else
+    about the capture changes — same login/SSH-discovery/catalog-probing machinery as
+    ``capture()``, just a different ``redact_values`` flag.
+
+    The returned dict's method ``value``s are genuinely raw (unredacted) response data — this is
+    NOT publishable and NOT safe to persist as-is. Callers (``fixtures.write_fixture_set``) MUST
+    run every value through ``sanitize.FixtureSanitizer`` before writing anything to disk.
+    """
+    progress = on_progress or _noop
+    return await _enumerate(
+        host,
+        username,
+        password,
+        ssh=ssh,
+        dangerous=False,
+        include_destructive=False,
+        redact_values=False,
+        on_progress=progress,
+    )

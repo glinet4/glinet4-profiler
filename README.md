@@ -99,6 +99,153 @@ project) — there is **no runtime dependency on gli4py** (deps are just
   known, and **Submit** opens its issue form. It releases independently of this
   package.
 
+## Contributing fixtures for the library's golden tests
+
+Beyond a publishable profile, you can capture a **fixture set**: real (but
+sanitized) raw RPC responses, one JSON file per `service.method`, for the
+[glinet4](https://github.com/glinet4/glinet4) library's golden tests.
+
+```bash
+uv run glinet4-profiler 192.168.8.1 --fixtures-out ./fixtures
+```
+
+This is a separate, always-read-only capture (it never HTTP-calls a
+write/dangerous endpoint, regardless of `--dangerous`) that writes
+`./fixtures/<model>_<firmware>/<service>.<method>.json` — the sanitized raw
+`result` for every successfully-probed read method — plus a `manifest.json`
+recording provenance: model, firmware, capture date, profiler version, and
+the sanitizer's version + ruleset hash.
+
+Sanitization here is **stricter, and different**, from the profile flow
+above — raw response *values* survive on purpose (the library's tests need
+real API shapes to assert against):
+
+- MAC addresses are pseudonymized **consistently**: the same real MAC always
+  maps to the same fake MAC everywhere in the set, so cross-payload identity
+  (e.g. a client's MAC in both `clients.get_list` and
+  `lan.get_static_bind_list`) survives.
+- SSIDs and hostnames become `ssid-N` / `host-N` tokens (also consistent
+  within the set).
+- Any field whose key looks like a secret (`password`, `key`, `token`,
+  `secret`, `nonce`, `salt`, ...) is nulled out.
+- Public IPs are replaced with documentation-range addresses (`192.0.2.0/24`,
+  `2001:db8::/32`); your **LAN** addresses (e.g. `192.168.x.x`) are kept
+  verbatim — the local topology is the fixture's actual test value.
+- `host:port` / `[ipv6]:port` compounds (e.g. a WireGuard peer's `end_point`)
+  are parsed: the address half follows the MAC/IP rules above, the port is
+  kept. A bare-domain `endpoint`/`end_point` with no `:port` is tokenized
+  like any other host field.
+- The personal-field vocabulary (`ssid`, `name`, `hostname`, `user`,
+  `email`, `domain`, ...) is shared with the profile flow's signature
+  labeler, so a key personal there is never missed here — either
+  pseudonymized to a stable token or nulled, whichever leaves nothing to
+  re-identify.
+- Blocklist keys (`blacklist`, `whitelist`, `black_white_list`, `block_list`,
+  `allow_list`, `deny_list`, `website`/`site` and their plurals) are in the
+  same host-token vocabulary, so a **JSON array of bare domains** under one
+  of them — e.g. GL.iNet's own `black_white_list` service — is tokenized
+  element-by-element. `whitelist` is included even though
+  `firewall.get_wan_access.whitelist` is a real list of *IPs*, not domains:
+  the IP rule runs before this one, so an IP-shaped element is claimed there
+  first and is never mistaken for a hostname.
+- `zonename`/`timezone` (`system.get_timezone_config`) are nulled — an IANA
+  zone name like `Australia/Sydney` is city-level location. Siblings
+  (offsets, booleans) survive, so the response shape is kept.
+- Cellular services (`modem.*`, `sms-forward.*`) — SMS bodies,
+  IMEI/ICCID/IMSI/MSISDN, phone numbers (national-format ones included), and
+  cell-tower identifiers (MCC/MNC/LAC/CID/PCI, which geolocate the device via
+  public tower databases) — get the strictest treatment: every string **and
+  numeric** value is nulled unless explicitly whitelisted as a safe
+  structural/status field. It's the highest-risk surface in the catalog, so
+  it defaults to nothing surviving rather than relying on a rule catching
+  every field GL.iNet's firmware might expose.
+- **Any string containing a newline is nulled**, whatever its key. Free text —
+  a custom hosts file, an inline `.ovpn` config with its PEM blocks and
+  provider hostname, a log dump, an AT-command transcript — carries MACs, IPs,
+  hostnames and key material *mid-line*, where a whole-value rule cannot see
+  them. Rather than keep patching the instances, the rule is stated at the
+  level of the class: a newline means free text, and free text is nulled. The
+  key survives with a `null` value, so the response shape is kept. On the
+  reference mt6000/4.9.0 capture this costs exactly two strings
+  (`dns.get_host.content`, `wg-server.get_config.amnezia`), neither of which
+  the library reads.
+- MACs and public IPs are also scrubbed **mid-string**, through the same
+  pseudonym maps as standalone values — so a MAC in a status line and the same
+  MAC in a `clients.get_list` key land on the *same* fake MAC.
+- The `logread` service is **excluded from emission entirely** — its methods
+  (`get_system_log`, `get_kernel_log`, ...) return raw free-text log dumps with
+  no golden-test value. The multi-line rule above would null them anyway; the
+  exclusion is kept as defence in depth (it fails differently: this one is
+  keyed on the service, that one on the value). No `logread.*.json` file is
+  ever written.
+- `dns.get_host` is **excluded from emission** — it contains single-line
+  free-text host mappings (e.g. `192.168.8.42 nas.smith-family.lan`) with
+  user hostnames that the multi-line rule cannot catch. The glinet4 library
+  never reads this method (only `system get_info` and documented routes),
+  so it has no golden-test value. Other `dns.*` methods (e.g. `get_info`'s
+  DoH/DoT provider catalog) are still emitted. No `dns.get_host.json` file
+  is ever written.
+
+Every rule above is unit-tested (`tests/test_sanitize.py`), but **review the
+output before committing it anywhere** — you know your own network better
+than an automated tool does. Once you're happy with it, open a PR against the
+library's `tests/fixtures/` with the new `<model>_<firmware>/` directory.
+
+### What a fixture set still tells someone about you
+
+Sanitization removes credentials and identifiers; it does not make the set
+anonymous. A fixture set is **your device's configuration**, and you are
+attributable — the PR that contributes it has your name on it. Specifically:
+
+- **Port-forwarding rules keep their real ports and LAN targets.** A
+  `firewall.get_port_forward_list` fixture emits the actual external port,
+  protocol and internal destination of every rule you have (the rule's `name`
+  is tokenized, the LAN IP is kept as topology). `32400 → 192.168.8.x` says
+  you run Plex; `22`, `3389` or `8006` say rather more. This is deliberate —
+  the rule shape *is* the golden-test value — but it is a statement about your
+  network, published under your name. **Read the port-forward fixture before
+  you open the PR**, and delete it from the set if you would rather not say.
+- **Dict keys that aren't MACs are not pseudonymized.** MAC-keyed dicts (e.g.
+  `clients.get_list`) have their keys pseudonymized like any other MAC, but a
+  response keyed by *hostname* or *IP* would keep those keys verbatim — only
+  values are tokenized. No GL.iNet method in the reference capture is shaped
+  that way (0 instances), so this is a latent gap rather than a live one; if a
+  future firmware returns a hostname-keyed map, its keys will leak until a
+  rule covers them.
+- **`tzoffset` is kept on purpose.** `zonename`/`timezone` are nulled (a zone
+  name is city-level location), but the numeric UTC offset stays: it is
+  already derivable from the `localtime - timestamp` pair in the same
+  response, which the fixture keeps, so nulling it would cost shape and buy
+  nothing. It narrows you to a longitude band, not a city.
+- **Single-line free text under an unrecognized key still passes through
+  verbatim.** The multi-line rule only fires on a newline; the key-vocabulary
+  rules (SSID/host/blocklist tokens, secret/personal/cellular nulling) only
+  fire on a key the sanitizer knows. An array — or a single-line,
+  comma/space-joined list — of bare domains or URLs under a key outside both
+  vocabularies is neither shape, so nothing claims it and it is emitted
+  as-is. **Read the emitted files before opening a PR**, and eyeball
+  services whose whole purpose is a domain list, e.g. `parental-control`,
+  `black_white_list`, `adguardhome` — anything under an unfamiliar key that
+  looks like a household's browsing policy rather than router state.
+- **Public IPs inside a vendor-shipped catalog get doc-range-substituted
+  like any other public IP** (`dns.get_info`'s built-in DoH/DoT resolver
+  list is the real example — Control D's, NextDNS's, etc. server
+  addresses). That's not a leak — it's not your data — but don't be
+  surprised to see Cloudflare's public resolver address read back as
+  `192.0.2.7`: the sanitizer can't tell "vendor constant" apart from "your
+  address" by shape alone, so it treats both the same way.
+
+**Caveat on MAC/IP/token pseudonym numbering:** the `-N` suffix each fake
+MAC/IP/SSID/token gets is assigned **positionally** — in the order that real
+value is first *encountered* while walking the capture (methods sorted by
+`(service, method)`, then each payload's own key order). Two captures of the
+same physical device can walk fields in a different order (the router's own
+JSON key order isn't guaranteed stable across firmware/API calls), so the
+same real MAC/SSID/etc. can land on a *different* fake index between two
+regenerations of "the same" fixture set. A diff between two fixture sets can
+therefore look noisier than the underlying device state actually changed —
+don't read positional-index churn alone as a meaningful change.
+
 ## Development
 
 ```bash
