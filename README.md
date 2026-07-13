@@ -140,6 +140,14 @@ real API shapes to assert against):
   labeler, so a key personal there is never missed here — either
   pseudonymized to a stable token or nulled, whichever leaves nothing to
   re-identify.
+- Blocklist keys (`blacklist`, `whitelist`, `black_white_list`, `block_list`,
+  `allow_list`, `deny_list`, `website`/`site` and their plurals) are in the
+  same host-token vocabulary, so a **JSON array of bare domains** under one
+  of them — e.g. GL.iNet's own `black_white_list` service — is tokenized
+  element-by-element. `whitelist` is included even though
+  `firewall.get_wan_access.whitelist` is a real list of *IPs*, not domains:
+  the IP rule runs before this one, so an IP-shaped element is claimed there
+  first and is never mistaken for a hostname.
 - `zonename`/`timezone` (`system.get_timezone_config`) are nulled — an IANA
   zone name like `Australia/Sydney` is city-level location. Siblings
   (offsets, booleans) survive, so the response shape is kept.
@@ -202,6 +210,23 @@ attributable — the PR that contributes it has your name on it. Specifically:
   already derivable from the `localtime - timestamp` pair in the same
   response, which the fixture keeps, so nulling it would cost shape and buy
   nothing. It narrows you to a longitude band, not a city.
+- **Single-line free text under an unrecognized key still passes through
+  verbatim.** The multi-line rule only fires on a newline; the key-vocabulary
+  rules (SSID/host/blocklist tokens, secret/personal/cellular nulling) only
+  fire on a key the sanitizer knows. An array — or a single-line,
+  comma/space-joined list — of bare domains or URLs under a key outside both
+  vocabularies is neither shape, so nothing claims it and it is emitted
+  as-is. **Read the emitted files before opening a PR**, and eyeball
+  services whose whole purpose is a domain list, e.g. `parental-control`,
+  `black_white_list`, `adguardhome` — anything under an unfamiliar key that
+  looks like a household's browsing policy rather than router state.
+- **Public IPs inside a vendor-shipped catalog get doc-range-substituted
+  like any other public IP** (`dns.get_info`'s built-in DoH/DoT resolver
+  list is the real example — Control D's, NextDNS's, etc. server
+  addresses). That's not a leak — it's not your data — but don't be
+  surprised to see Cloudflare's public resolver address read back as
+  `192.0.2.7`: the sanitizer can't tell "vendor constant" apart from "your
+  address" by shape alone, so it treats both the same way.
 
 **Caveat on MAC/IP/token pseudonym numbering:** the `-N` suffix each fake
 MAC/IP/SSID/token gets is assigned **positionally** — in the order that real

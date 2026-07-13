@@ -74,7 +74,7 @@ def project_report(
 # response bodies carry things (client MACs, SSIDs, WAN IPs, DHCP hostnames) the value-stripped
 # registry flow never had to consider.
 
-FIXTURE_SANITIZER_VERSION = 4  # bump on any behavioral change to a rule below
+FIXTURE_SANITIZER_VERSION = 5  # bump on any behavioral change to a rule below
 
 # ── The free-text class ───────────────────────────────────────────────────────────────────────
 # Every rule below except this one is ANCHORED: it inspects a whole value (or its key) and
@@ -145,6 +145,25 @@ _HOST_KEYS = (
     # _sanitize_host_port, which runs first.
     "endpoint",
     "end_point",
+    # Blocklist vocabulary (Round 4): the free-text rule above only ever fires on a NEWLINE-
+    # joined blob — it never sees a JSON ARRAY of bare domains, the idiomatic wire shape for a
+    # blocklist (and GL.iNet's own catalog has a service literally named "black_white_list").
+    # TOKENIZE, not null: the value IS the whole domain in an array, so the anchored key rule
+    # applies cleanly, same as any other host-shaped field. "whitelist" is included even though
+    # a real service (firewall.get_wan_access) uses it for a list of IPs, not domains — safe by
+    # rule ORDER, not by omission: the IP rule runs before this one in `_sanitize_str`, so an
+    # IP-shaped element is claimed there first and never reaches this branch (see
+    # test_whitelist_of_ips_handled_by_ip_rule_not_tokenized_as_hosts). "website"/"site" also
+    # cover "websites"/"sites" (the plural matcher) and "site_list" (the "site_" prefix
+    # boundary).
+    "blacklist",
+    "whitelist",
+    "black_white_list",
+    "block_list",
+    "allow_list",
+    "deny_list",
+    "website",
+    "site",
 )
 # Free-text/content-free personal fields: no cross-payload identity worth preserving, so nulling
 # is simplest and safest (the rest of enumerator.signature.PERSONAL_FIELDS).
@@ -314,6 +333,18 @@ class FixtureSanitizer:
             out: dict[str, Any] = {}
             for k, v in value.items():
                 new_key = self._mac(k) if _MAC_TEXT.fullmatch(k) else k
+                if new_key in out:
+                    # `_mac()` is deliberately case-insensitive (same physical device, same
+                    # fake MAC, everywhere) — but that means two case-DIFFERING spellings of one
+                    # real MAC used as dict keys in THIS SAME payload now collide on one fake
+                    # key. A plain overwrite would silently drop a whole record; disambiguate
+                    # instead so both survive distinctly. The suffixed key is no longer
+                    # MAC-shaped, but that only ever happens on this pathological duplicate-
+                    # spelling input — every normal key keeps its plain fake-MAC shape.
+                    suffix = 2
+                    while f"{new_key}#{suffix}" in out:
+                        suffix += 1
+                    new_key = f"{new_key}#{suffix}"
                 out[new_key] = (
                     None if _dict_key_forces_null(k, service) else self.sanitize(v, k, service)
                 )

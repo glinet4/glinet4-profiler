@@ -1,5 +1,8 @@
 """Tests for the sanitizing projection."""
-# pylint: disable=missing-function-docstring,redefined-outer-name
+# pylint: disable=missing-function-docstring,redefined-outer-name,too-many-lines
+# too-many-lines: each security-review round appends its own payloads + tests in a clearly
+# comment-sectioned block; splitting the file would fragment shared RAW fixtures across modules
+# for no navigability gain.
 
 import importlib
 import json
@@ -923,6 +926,82 @@ def test_version_and_time_strings_are_not_mangled_by_the_mid_string_scrub():
     sanitizer = FixtureSanitizer()
     clean = sanitizer.sanitize({"fw": "GL-MT6000 v4.9.0", "at": "10:22:31", "t": "8:30"})
     assert clean == {"fw": "GL-MT6000 v4.9.0", "at": "10:22:31", "t": "8:30"}
+
+
+# ── Round 4: the blocklist ARRAY shape — the multi-line rule never fires on an array (no
+# element contains a newline), and GL.iNet's own catalog has a service literally named
+# "black_white_list". Closed via the blocklist vocabulary added to _HOST_KEYS.
+
+_BLOCKLIST_ARRAY_KEYS = (
+    "blacklist",
+    "whitelist",
+    "black_white_list",
+    "block_list",
+    "allow_list",
+    "deny_list",
+    "website",
+    "site",
+    "websites",  # plural matcher
+    "sites",
+    "site_list",  # "site_" prefix boundary
+)
+
+
+@pytest.mark.parametrize("key", _BLOCKLIST_ARRAY_KEYS)
+def test_blocklist_array_domains_tokenized(key):
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({key: ["evil.example", "casino-example.com"]})
+    for value in clean[key]:
+        assert re.match(r"^host-\d+$", value)
+    blob = json.dumps(clean)
+    assert "evil.example" not in blob and "casino-example.com" not in blob
+
+
+def test_black_white_list_service_realistic_capture_leaks_nothing():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"mode": 1, "enable": True, "black_white_list": ["casino-example.com", "evil.example"]},
+        service="black_white_list",
+    )
+    assert clean["mode"] == 1 and clean["enable"] is True
+    for value in clean["black_white_list"]:
+        assert re.match(r"^host-\d+$", value)
+    assert "casino-example.com" not in json.dumps(clean)
+
+
+def test_whitelist_of_ips_handled_by_ip_rule_not_tokenized_as_hosts():
+    # the IP rule runs BEFORE the host-key rule in _sanitize_str, so a real IP-bearing
+    # "whitelist" (firewall.get_wan_access) must stay untouched, not tokenized as a hostname.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"whitelist": ["203.0.113.9", "192.168.8.5", "51.68.44.10"]})
+    values = clean["whitelist"]
+    assert not any(re.match(r"^host-\d+$", v) for v in values)
+    assert values[0] == "203.0.113.9"  # RFC 5737 doc-range -> is_private True, kept
+    assert values[1] == "192.168.8.5"  # RFC1918 private -> kept, topology
+    assert values[2] != "51.68.44.10"  # public -> substituted, not tokenized
+    assert values[2].startswith(("192.0.2.", "198.51.100.", "203.0.113."))
+
+
+def test_whitelist_of_domains_tokenized_as_hosts():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"whitelist": ["evil.example"]})
+    assert re.match(r"^host-\d+$", clean["whitelist"][0])
+    assert "evil.example" not in json.dumps(clean)
+
+
+# ── Round 4, Minor: case-differing MAC-shaped dict KEYS must not collide (case-insensitive
+# _mac() means two spellings of one real MAC as dict keys in ONE payload now land on one fake
+# key; a naive comprehension would let the second entry silently clobber the first).
+
+
+def test_case_differing_mac_dict_keys_do_not_collide():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"94:83:C4:AA:BB:01": {"name": "first"}, "94:83:c4:aa:bb:01": {"name": "second"}}
+    )
+    assert len(clean) == 2  # both records survive distinctly, no silent entry loss
+    names = {rec["name"] for rec in clean.values()}
+    assert len(names) == 2  # each record's own tokenized "name" survived independently
 
 
 def test_personal_field_guard_raises_on_uncovered_key():
