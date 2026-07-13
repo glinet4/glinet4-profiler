@@ -74,7 +74,7 @@ def project_report(
 # response bodies carry things (client MACs, SSIDs, WAN IPs, DHCP hostnames) the value-stripped
 # registry flow never had to consider.
 
-FIXTURE_SANITIZER_VERSION = 5  # bump on any behavioral change to a rule below
+FIXTURE_SANITIZER_VERSION = 6  # bump on any behavioral change to a rule below
 
 # ── The free-text class ───────────────────────────────────────────────────────────────────────
 # Every rule below except this one is ANCHORED: it inspects a whole value (or its key) and
@@ -213,6 +213,31 @@ _CELLULAR_STRICT_WHITELIST = (
 # (requires the leading '+') so it doesn't collide with bare numeric IDs/serials elsewhere.
 _PHONE = re.compile(r"^\+[1-9]\d{6,14}$")
 
+# Filtering/blocklist surface (Round 5): the bare-key residual. GL.iNet's blocklist wire shape
+# returns domains under bare keys the Round 4 review couldn't fully enumerate ahead of time —
+# ``black_white_list.get_list`` returns ``{"list": [...domains...]}``, and a generic
+# ``{"filter_list": [...]}`` / ``{"rules": [...]}`` shape is common across the wider
+# parental-control/DNS-filtering family. Adding those bare key names ("list"/"rules") to
+# _HOST_KEYS was rejected: boundary matching would then tokenize every enum-ish ``*_list`` array
+# the library legitimately reads elsewhere (``band_list``, ``mode_list``, ...) — real fidelity
+# damage for golden tests, system-wide, just to close one service's leak.
+#
+# Fix: a SERVICE-scoped strict mode, mirroring ``_is_cellular_service``/``_cellular_strict_nulls``
+# exactly (tokenize instead of null — these values ARE the fixture's domains, not secrets).
+# Confining the rule to filtering-hint services means zero effect on ``band_list``/``mode_list``
+# under ``wifi``/``netmode``/every other service; only fixtures captured under one of these
+# service names are affected.
+_FILTER_SERVICE_HINTS = (
+    "black_white_list",  # real catalog service (enumerator/catalog.py)
+    "parental-control",  # real catalog service — hyphenated spelling
+    "parental_control",  # defensive underscore spelling; not a real catalog key today
+    "adguardhome",  # real catalog service (DNS-level ad/tracker blocking)
+    "bark",  # real catalog service; catalog comment: "content filtering"
+    "filter",  # generic hint for any future "*-filter"/"*_filter" service
+    "url-filter",  # not a real catalog key today; already covered by the "filter" substring,
+    # kept explicit for readability/documentation of intent
+)
+
 # host:port / [v6]:port compound strings (Critical fix 2 — WireGuard's end_point format). The
 # plain form requires the host part to contain no ':' at all, so a bare IPv6 address (multiple
 # colons, no brackets) never matches it; a HH:MM(:SS) time-of-day matches syntactically but its
@@ -234,6 +259,10 @@ def _split_host_port(value: str) -> tuple[str, str, bool] | None:
 
 def _is_cellular_service(service: str | None) -> bool:
     return service is not None and any(hint in service for hint in _CELLULAR_SERVICE_HINTS)
+
+
+def _is_filter_service(service: str | None) -> bool:
+    return service is not None and any(hint in service for hint in _FILTER_SERVICE_HINTS)
 
 
 def _cellular_strict_nulls(key: str | None, service: str | None) -> bool:
@@ -387,6 +416,16 @@ class FixtureSanitizer:
                 return self._token(value, self._ssids, "ssid")
             if _key_matches(key, _HOST_KEYS):
                 return self._token(value, self._hosts, "host")
+        if value and _is_filter_service(service):
+            # Filtering-service strict mode (Round 5): everything above this point already
+            # claimed IP/MAC/host:port/phone/cellular/ssid/named-host shapes. What's left under
+            # a blocklist/filtering service is a bare domain (or enum-ish string) under a key
+            # name the review can never fully enumerate ahead of time ("list", "filter_list",
+            # "rules", ...) — tokenize it unconditionally, key-agnostic, same as the cellular
+            # strict mode's null-unconditionally but softer (these values are the fixture's
+            # actual domains, not secrets). Key-agnostic (not gated on `key is not None`) so a
+            # service that returns a bare list of domains with no wrapping key is covered too.
+            return self._token(value, self._hosts, "host")
         if len(value) >= 64 and OPAQUE_BLOB.match(value):
             return None  # high-entropy blob backstop, regardless of key name
         # Everything above matched a whole value. What's left is a single-line string that no
@@ -494,6 +533,7 @@ def ruleset_hash() -> str:
             "sms_content_keys": _SMS_CONTENT_KEYS,
             "cellular_service_hints": _CELLULAR_SERVICE_HINTS,
             "cellular_strict_whitelist": _CELLULAR_STRICT_WHITELIST,
+            "filter_service_hints": _FILTER_SERVICE_HINTS,
             "mac_fake_prefix": _MAC_FAKE_PREFIX,
             "ipv4_doc_ranges": _IPV4_DOC_RANGES,
             # Policy markers, not key lists: flipping either rule must change the hash even if

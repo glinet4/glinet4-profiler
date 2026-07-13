@@ -1004,6 +1004,88 @@ def test_case_differing_mac_dict_keys_do_not_collide():
     assert len(names) == 2  # each record's own tokenized "name" survived independently
 
 
+# ── Round 5: the blocklist BARE-KEY residual — GL.iNet's black_white_list.get_list returns
+# domains under the bare key "list" (not any of the Round 4 blocklist-vocabulary key names).
+# Adding "list"/"filter_list"/"rules" to _HOST_KEYS was rejected: boundary matching would then
+# tokenize every *_list enum array the library legitimately reads (band_list, mode_list, ...)
+# system-wide. Instead, this is a SERVICE-scoped strict mode (mirrors the cellular strict mode
+# exactly): under a filtering-service hint, every bare string value/list-element that no earlier
+# rule claimed gets tokenized as a host token, regardless of key name.
+
+
+def test_black_white_list_bare_list_key_tokenized():
+    # the exact residual reproduced against commit 955299c: black_white_list.get_list returns
+    # domains under the bare key "list", which Round 4's blocklist vocabulary never covered.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"list": ["casino.example", "nas.smith.lan"]}, service="black_white_list"
+    )
+    for value in clean["list"]:
+        assert re.match(r"^host-\d+$", value)
+    blob = json.dumps(clean)
+    assert "casino.example" not in blob and "nas.smith.lan" not in blob
+
+
+def test_filter_list_key_tokenized_under_filtering_service():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"filter_list": ["x.example"]}, service="parental-control")
+    assert re.match(r"^host-\d+$", clean["filter_list"][0])
+    assert "x.example" not in json.dumps(clean)
+
+
+def test_rules_key_tokenized_under_filtering_service():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"rules": ["y.example"]}, service="adguardhome")
+    assert re.match(r"^host-\d+$", clean["rules"][0])
+    assert "y.example" not in json.dumps(clean)
+
+
+def test_band_list_under_wifi_service_not_tokenized():
+    # anti-over-match guard: "wifi" is not a filtering-service hint, so an enum-ish *_list array
+    # the library legitimately reads (radio band selection) must survive verbatim.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"band_list": ["2g", "5g"]}, service="wifi")
+    assert clean == {"band_list": ["2g", "5g"]}
+
+
+def test_mode_list_under_non_filtering_service_not_tokenized():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"mode_list": ["ap", "sta"]}, service="netmode")
+    assert clean == {"mode_list": ["ap", "sta"]}
+
+
+def test_firewall_whitelist_ips_still_ip_handled_not_tokenized():
+    # the IP rule must still run first even under an explicit service context: "firewall" isn't
+    # a filtering-service hint, and even if it were, the IP rule precedes the filter-service rule.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize({"whitelist": ["203.0.113.9", "192.168.8.5"]}, service="firewall")
+    assert clean["whitelist"] == ["203.0.113.9", "192.168.8.5"]
+
+
+def test_filtering_service_ip_shaped_element_stays_ip_handled():
+    # same guarantee, but under a service that IS a filtering hint: an IP-shaped element must
+    # still be claimed by the IP rule, never tokenized as a host.
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"list": ["203.0.113.9", "evil.example"]}, service="black_white_list"
+    )
+    assert clean["list"][0] == "203.0.113.9"  # RFC 5737 doc-range -> is_private True, kept
+    assert re.match(r"^host-\d+$", clean["list"][1])
+
+
+def test_black_white_list_realistic_get_list_capture_leaks_nothing():
+    sanitizer = FixtureSanitizer()
+    clean = sanitizer.sanitize(
+        {"mode": 1, "enable": True, "list": ["casino.example", "nas.smith.lan"]},
+        service="black_white_list",
+    )
+    assert clean["mode"] == 1 and clean["enable"] is True
+    for value in clean["list"]:
+        assert re.match(r"^host-\d+$", value)
+    blob = json.dumps(clean)
+    assert "casino.example" not in blob and "nas.smith.lan" not in blob
+
+
 def test_personal_field_guard_raises_on_uncovered_key():
     from glinet4_profiler import sanitize as sanitize_module
     from glinet4_profiler.enumerator import signature
