@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/glinet4/glinet4-profiler/compare/glinet-profiler-v0.4.0...glinet-profiler-v0.4.1) (2026-07-13)
+
+
+### Documentation
+
+* use the theme-blind logo in the README header ([#12](https://github.com/glinet4/glinet4-profiler/issues/12)) ([5144ecd](https://github.com/glinet4/glinet4-profiler/commit/5144ecd78e20b4976d7dd9a91cb75a6e310c44a9))
+
 ## [0.4.0](https://github.com/glinet4/glinet4-profiler/compare/glinet-profiler-v0.3.1...glinet-profiler-v0.4.0) (2026-07-13)
 
 
