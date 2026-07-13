@@ -178,6 +178,13 @@ real API shapes to assert against):
   exclusion is kept as defence in depth (it fails differently: this one is
   keyed on the service, that one on the value). No `logread.*.json` file is
   ever written.
+- `dns.get_host` is **excluded from emission** — it contains single-line
+  free-text host mappings (e.g. `192.168.8.42 nas.smith-family.lan`) with
+  user hostnames that the multi-line rule cannot catch. The glinet4 library
+  never reads this method (only `system get_info` and documented routes),
+  so it has no golden-test value. Other `dns.*` methods (e.g. `get_info`'s
+  DoH/DoT provider catalog) are still emitted. No `dns.get_host.json` file
+  is ever written.
 
 Every rule above is unit-tested (`tests/test_sanitize.py`), but **review the
 output before committing it anywhere** — you know your own network better

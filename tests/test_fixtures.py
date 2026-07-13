@@ -116,6 +116,42 @@ RAW = {
                 },
             },
         },
+        "dns": {
+            # dns.get_host is a pure user-data field containing single-line free-text host
+            # mappings (e.g., "192.168.8.42 nas.smith-family.lan"). The multi-line rule only
+            # fires on newlines, so single-line entries leak hostnames verbatim. The method
+            # has zero golden-test value (glinet4 library never reads it), so it must never
+            # emit a fixture. Other dns.* methods like get_info (DoH/DoT provider catalog)
+            # ARE included because the library may care about those.
+            "get_host": {
+                "status": "available",
+                "error_code": None,
+                "risk": "read",
+                "discovered_by": "catalog",
+                "covered_by": None,
+                "params": None,
+                "signature": None,
+                "value": {"content": "192.168.8.42 nas.smith-family.lan"},
+            },
+            "get_info": {
+                "status": "available",
+                "error_code": None,
+                "risk": "read",
+                "discovered_by": "catalog",
+                "covered_by": "dns_providers",
+                "params": None,
+                "signature": {"names": ["<provider_name>"]},
+                "value": {
+                    "providers": [
+                        {
+                            "name": "NextDNS",
+                            "doh_url": "https://dns.nextdns.io",
+                            "dot_host": "dns.nextdns.io",
+                        }
+                    ]
+                },
+            },
+        },
     },
 }
 
@@ -125,15 +161,18 @@ def test_select_fixture_methods_only_successful_reads():
     names = [(s, m) for s, m, _ in selected]
     assert names == [
         ("clients", "get_list"),
+        ("dns", "get_info"),
         ("lan", "get_static_bind_list"),
         ("system", "get_info"),
     ]
     # excluded: reboot (dangerous, despite "available"), block_client (discovered/no value),
-    # wifi.get_config (errored/no value), logread.* (log-shaped service, despite available+read)
+    # wifi.get_config (errored/no value), logread.* (log-shaped service, despite available+read),
+    # dns.get_host (pure user-data with no golden-test value, despite available+read)
     assert ("system", "reboot") not in names
     assert ("clients", "block_client") not in names
     assert ("wifi", "get_config") not in names
     assert ("logread", "get_kernel_log") not in names
+    assert ("dns", "get_host") not in names
 
 
 def test_log_shaped_services_never_emit_fixtures():
@@ -149,13 +188,41 @@ def test_log_shaped_services_never_emit_fixtures():
     assert "DHCPACK" not in blob and "94:83:c4" not in blob
 
 
+def test_dns_get_host_is_excluded():
+    # dns.get_host contains single-line free-text host mappings (e.g.,
+    # "192.168.8.42 nas.smith-family.lan") that the multi-line rule cannot catch.
+    # The method has zero golden-test value (glinet4 library never reads it),
+    # so it must never emit a fixture.
+    selected = select_fixture_methods(RAW)
+    names = [(s, m) for s, m, _ in selected]
+    assert ("dns", "get_host") not in names
+    _fixture_id, files, manifest = build_fixture_set(RAW)
+    assert "dns.get_host.json" not in files
+    assert all(not name == "dns.get_host" for name in manifest["methods"])
+    # the raw host mapping never reaches any emitted fixture
+    blob = json.dumps(files)
+    assert "nas.smith-family.lan" not in blob and "192.168.8.42" not in blob
+
+
+def test_other_dns_methods_still_emit_fixtures():
+    # dns.get_info (and any other dns.* method aside from get_host) should still
+    # be emitted because the library may care about provider catalogs.
+    selected = select_fixture_methods(RAW)
+    names = [(s, m) for s, m, _ in selected]
+    assert ("dns", "get_info") in names
+    _fixture_id, files, manifest = build_fixture_set(RAW)
+    assert "dns.get_info.json" in files
+    assert "dns.get_info" in manifest["methods"]
+
+
 def test_build_fixture_set_names_files_and_sanitizes():
     fixture_id, files, _manifest = build_fixture_set(RAW)
     assert fixture_id == "mt6000_4.9.0"
     assert set(files.keys()) == {
-        "system.get_info.json",
         "clients.get_list.json",
+        "dns.get_info.json",
         "lan.get_static_bind_list.json",
+        "system.get_info.json",
     }
     sysinfo = files["system.get_info.json"]
     assert sysinfo["mac"] != "94:83:C4:AA:BB:CC"  # pseudonymized, not the real device MAC
@@ -185,6 +252,7 @@ def test_build_fixture_set_manifest_has_provenance_fields():
     assert isinstance(manifest["ruleset_hash"], str) and manifest["ruleset_hash"]
     assert manifest["methods"] == [
         "clients.get_list",
+        "dns.get_info",
         "lan.get_static_bind_list",
         "system.get_info",
     ]

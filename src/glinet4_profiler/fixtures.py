@@ -44,6 +44,18 @@ _PACKAGE_NAME = "glinet4-profiler"
 # the only such service in the catalog today.
 _LOG_BLOB_SERVICES = frozenset({"logread"})
 
+# Specific (service, method) pairs that carry pure user-data with zero golden-test value and
+# must never emit fixtures. These are defence-in-depth complements to the sanitizer's rules:
+# the sanitizer alone can handle them (e.g., the multi-line rule would null them), but
+# excluding them here means we never write the file at all rather than writing a nulled version.
+#
+# ``dns.get_host`` contains single-line free-text host mappings (e.g.,
+# "192.168.8.42 nas.smith-family.lan"). The multi-line rule only fires on newlines, so
+# single-line entries leak user hostnames verbatim. The glinet4 library never reads
+# ``get_host`` (grep confirms it only consumes ``system get_info`` and the documented route
+# surface), so the method has zero golden-test value.
+_EXCLUDED_METHODS = frozenset({("dns", "get_host")})
+
 
 def profiler_version() -> str:
     """Installed ``glinet4-profiler`` distribution version (``0+unknown`` if not installed)."""
@@ -63,7 +75,9 @@ def select_fixture_methods(raw: dict[str, Any]) -> list[tuple[str, str, Any]]:
     field names ``enumerator.report.to_json`` writes), so a WRITE/DANGEROUS method that somehow
     carries a stray value (e.g. an SSH-discovered write recorded without an HTTP call) can never
     produce a fixture file. Log-shaped services (``_LOG_BLOB_SERVICES``) are excluded outright —
-    their free-text blobs cannot be sanitized by rule and carry no golden-test value.
+    their free-text blobs cannot be sanitized by rule and carry no golden-test value. Specific
+    (service, method) pairs in ``_EXCLUDED_METHODS`` are also excluded — they carry pure
+    user-data with zero golden-test value.
     """
     out: list[tuple[str, str, Any]] = []
     for service, methods in sorted(raw.get("services", {}).items()):
@@ -74,6 +88,7 @@ def select_fixture_methods(raw: dict[str, Any]) -> list[tuple[str, str, Any]]:
                 rec.get("status") == "available"
                 and rec.get("risk") == "read"
                 and rec.get("value") is not None
+                and (service, method) not in _EXCLUDED_METHODS
             ):
                 out.append((service, method, rec["value"]))
     return out
