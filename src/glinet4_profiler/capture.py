@@ -206,6 +206,7 @@ async def capture(
     dangerous: bool = False,
     include_destructive: bool = False,
     keep_data: bool = False,
+    ubus: bool = False,
     on_progress: ProgressFn | None = None,
 ) -> dict[str, Any]:
     """Enumerate (read-only by default; SSH attempted by default) and return the sanitized profile.
@@ -217,6 +218,11 @@ async def capture(
 
     ``keep_data`` keeps each method's (secret-redacted) response value for LOCAL signature
     analysis; the result then carries response data and is *not* registry-publishable.
+
+    ``ubus`` additionally probes the stock-OpenWrt ``/ubus`` endpoint (port 8080/8443) for the
+    unauthenticated ``list *`` schema and a sanitized UCI config-state dump, attached under a
+    top-level ``ubus`` key. Read-only; degrades to nothing (or schema-only) if the port is closed
+    or the ubus login is denied. See ``glinet4_profiler.ubus``.
 
     ``on_progress``, if given, is awaited with ``{"event": "progress", ...}`` dicts as the
     capture proceeds (ssh → login → probe → sanitize), for live UI/console feedback.
@@ -232,7 +238,33 @@ async def capture(
         on_progress=progress,
     )
     await progress({"event": "progress", "phase": "sanitize", "message": "Sanitizing profile…"})
-    return project_report(raw, device_id(raw.get("device", {})), keep_data=keep_data)
+    profile = project_report(raw, device_id(raw.get("device", {})), keep_data=keep_data)
+    if ubus:
+        block = await _capture_ubus_block(host, username, password, on_progress=progress)
+        if block is not None:
+            profile["ubus"] = block
+    return profile
+
+
+async def _capture_ubus_block(
+    host: str, username: str, password: str, *, on_progress: ProgressFn
+) -> dict[str, Any] | None:
+    """Probe /ubus and return the sanitized ``{endpoint, schema, uci}`` block, or None."""
+    from .sanitize import sanitize_ubus  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
+    from .ubus import capture_ubus  # pylint: disable=import-outside-toplevel  # noqa: PLC0415
+
+    host_only = _base_url(host).split("://", 1)[1].split("/")[0].split(":")[0]
+    raw_ubus = await capture_ubus(host_only, username, password, on_progress=on_progress)
+    if raw_ubus is None:
+        await on_progress(
+            {
+                "event": "progress",
+                "phase": "ubus",
+                "message": "ubus (:8080/:8443) not reachable — skipped.",
+            }
+        )
+        return None
+    return sanitize_ubus(raw_ubus)
 
 
 async def capture_raw(
