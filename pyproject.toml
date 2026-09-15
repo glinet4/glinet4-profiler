@@ -31,7 +31,7 @@ Changelog = "https://github.com/glinet4/glinet4-profiler/blob/main/CHANGELOG.md"
 glinet4-profiler = "glinet4_profiler.cli:main"
 
 [build-system]
-requires = ["uv_build>=0.11,<0.12"]
+requires = ["uv_build>=0.12,<0.13"]
 build-backend = "uv_build"
 
 [dependency-groups]
