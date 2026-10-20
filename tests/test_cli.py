@@ -25,6 +25,7 @@ def test_capture_mode_new_device_submit_link(monkeypatch, tmp_path, capsys):
         dangerous=False,
         include_destructive=False,
         keep_data=False,
+        ubus=False,
         on_progress=None,
     ):  # noqa: ARG001
         return PROFILE
@@ -57,6 +58,7 @@ def test_capture_mode_offline_submit_link(monkeypatch, tmp_path, capsys):
         dangerous=False,
         include_destructive=False,
         keep_data=False,
+        ubus=False,
         on_progress=None,
     ):  # noqa: ARG001
         return PROFILE
@@ -86,6 +88,7 @@ def test_capture_mode_include_destructive_implies_dangerous(monkeypatch, tmp_pat
         dangerous=False,
         include_destructive=False,
         keep_data=False,
+        ubus=False,
         on_progress=None,
     ):  # noqa: ARG001
         seen["dangerous"] = dangerous
@@ -117,6 +120,7 @@ def test_capture_mode_keep_data_is_local_only(monkeypatch, tmp_path, capsys):
         dangerous=False,
         include_destructive=False,
         keep_data=False,
+        ubus=False,
         on_progress=None,
     ):  # noqa: ARG001
         seen["keep_data"] = keep_data
@@ -223,6 +227,7 @@ def test_capture_mode_known_device(monkeypatch, tmp_path, capsys):
         dangerous=False,
         include_destructive=False,
         keep_data=False,
+        ubus=False,
         on_progress=None,
     ):  # noqa: ARG001
         return {**PROFILE, "model": "mt6000", "firmware_version": "4.9.0", "id": "mt6000_4.9.0"}

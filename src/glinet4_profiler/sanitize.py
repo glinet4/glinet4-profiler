@@ -64,6 +64,30 @@ def project_report(
     return out
 
 
+def sanitize_ubus(raw: dict[str, Any]) -> dict[str, Any]:
+    """Sanitize a raw ``ubus.capture_ubus()`` block for persistence/publication.
+
+    The ``schema`` (from ubus ``list *``) is object/method/arg-type signatures only — no device
+    values — so it is kept verbatim. The ``uci`` block carries real config *values* (WiFi PSKs,
+    SSIDs, MACs, IPs, hostnames), so every config is walked through a single
+    :class:`FixtureSanitizer`: secrets (``key``/``psk``/``password``/…) nulled, identifiers
+    (MAC/IP/host/SSID) pseudonymized — the same policy the library's fixtures use. One sanitizer
+    instance across all configs, so the same real MAC/host lands on one fake token throughout the
+    block. The UCI config name is passed as ``service`` so a config that happens to be named like
+    a cellular/filter service picks up the corresponding strict mode.
+    """
+    out: dict[str, Any] = {
+        "endpoint": raw.get("endpoint"),
+        "schema": raw.get("schema", {}),
+    }
+    sanitizer = FixtureSanitizer()
+    uci = raw.get("uci", {})
+    out["uci"] = {
+        config: sanitizer.sanitize(values, service=config) for config, values in uci.items()
+    }
+    return out
+
+
 # ── Fixture sanitization: raw-response fixtures for the library's golden tests ─────────────
 #
 # project_report() above drops every response VALUE outright — the safe floor for registry
